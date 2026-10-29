@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>［体育祭の名前］ しおり | SPORTS DAY 2026</title>
+<meta name="description" content="11月27日(金) 体育祭のしおり。施設案内・タイムテーブル・競技説明など。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="top" class="cover">
+  <div class="cover__bar wrap">
+    <span class="cover__brand">SPORTS DAY 2026</span>
+    <a href="#toc" class="cover__toc-link">目次</a>
+  </div>
+  <div class="cover__body wrap">
+    <div class="cover__text">
+      <div class="cover__date">
+        <span class="cover__day">11.27</span>
+        <span class="cover__weekday">FRI</span>
+      </div>
+      <h1 class="cover__title">［体育祭の名前］</h1>
+      <p class="cover__slogan">［スローガン・キャッチコピー］</p>
+      <p class="cover__venue">会場　［会場名］</p>
+    </div>
+    <!-- イラストができたら中身を <img src="img/cover.png" alt="…"> に差し替える -->
+    <div class="ph cover__illust">表紙イラスト<br>(イラスト班)</div>
+  </div>
+  <div class="track-stripe" aria-hidden="true"></div>
+</header>
+
+<main class="wrap">
+
+  <nav id="toc" class="toc" aria-label="目次">
+    <p class="eyebrow">CONTENTS</p>
+    <div class="toc__list">
+      <a href="#map"><span class="num">01</span>施設案内</a>
+      <a href="#timetable"><span class="num">02</span>タイムテーブル</a>
+      <a href="#events"><span class="num">03</span>競技説明＆みどころ</a>
+      <a href="#others"><span class="num">04</span>ほかの企画</a>
+      <a href="#fun"><span class="num">05</span>おたのしみ</a>
+      <a href="#notice"><span class="num">06</span>注意事項・連絡先</a>
+    </div>
+  </nav>
+
+  <!-- 01 施設案内 -->
+  <section id="map" class="section">
+    <div class="section__head">
+      <span class="section__num">01</span>
+      <h2>施設案内</h2>
+    </div>
+    <div class="ph ph--map">簡易マップ</div>
+    <div class="places">
+      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
+      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
+      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
+    </div>
+  </section>
+
+  <!-- 02 タイムテーブル(時刻とプログラム名は js/main.js の PROGRAM で管理) -->
+  <section id="timetable" class="section">
+    <div class="section__head">
+      <span class="section__num">02</span>
+      <h2>タイムテーブル</h2>
+    </div>
+
+    <div class="now">
+      <div class="now__head">
+        <span class="eyebrow eyebrow--flat">NOW RUNNING</span>
+        <span class="now__label" id="now-label" aria-live="polite">読み込み中…</span>
+      </div>
+      <div class="track">
+        <div class="track__lane" aria-hidden="true"></div>
+        <div class="track__line" aria-hidden="true"></div>
+        <div class="track__goal" aria-hidden="true"></div>
+        <!-- キャラの絵ができたら中身を <img src="img/runner.png" alt=""> に差し替える -->
+        <div class="track__runner" id="runner" aria-hidden="true">キャラ</div>
+      </div>
+      <div class="track__ends"><span>START</span><span>GOAL</span></div>
+    </div>
+    <p class="note" id="now-note">※時刻・プログラムは仮。当日は実際の時刻で自動的に動く</p>
+
+    <ol class="program" id="program">
+      <!-- js/main.js が PROGRAM から行を作る。JSが動かない時のための仮表示 -->
+      <li class="program__row"><span class="program__time">-</span><span class="program__name">タイムテーブルを読み込み中</span></li>
+    </ol>
+
+    <a href="#events" class="arrow-link">競技の説明へ
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"></path></svg>
+    </a>
+  </section>
+
+  <!-- 03 競技説明＆みどころ -->
+  <section id="events" class="section">
+    <div class="section__head">
+      <span class="section__num">03</span>
+      <h2>競技説明＆みどころ</h2>
+    </div>
+    <div class="events">
+      <article class="event">
+        <div class="ph event__illust">挿絵</div>
+        <div class="event__body">
+          <span class="event__no">EVENT 01</span>
+          <h3>［競技名］</h3>
+          <p><strong>ルール</strong>　［かんたんなルール］</p>
+          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
+        </div>
+      </article>
+      <article class="event">
+        <div class="ph event__illust">挿絵</div>
+        <div class="event__body">
+          <span class="event__no">EVENT 02</span>
+          <h3>［競技名］</h3>
+          <p><strong>ルール</strong>　［かんたんなルール］</p>
+          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
+        </div>
+      </article>
+      <article class="event">
+        <div class="ph event__illust">挿絵</div>
+        <div class="event__body">
+          <span class="event__no">EVENT 03</span>
+          <h3>［競技名］</h3>
+          <p><strong>ルール</strong>　［かんたんなルール］</p>
+          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 04 ほかの企画 -->
+  <section id="others" class="section">
+    <div class="section__head">
+      <span class="section__num">04</span>
+      <h2>ほかの企画</h2>
+    </div>
+    <p class="muted">［他の班から載せてほしい情報があればここに］</p>
+  </section>
+
+  <!-- 05 おたのしみ -->
+  <section id="fun" class="section">
+    <div class="section__head">
+      <span class="section__num">05</span>
+      <h2>おたのしみ</h2>
+    </div>
+    <div class="fun">
+      <div class="cheer">
+        <h3>応援ボタン</h3>
+        <span class="cheer__count" id="cheer-count" aria-live="polite">000</span>
+        <button type="button" class="cheer__btn" id="cheer-btn">がんばれ！</button>
+        <p class="note">押すたびにカウントが増えるよ(保存はされない)</p>
+      </div>
+      <div class="spot">
+        <h3>間違い探し</h3>
+        <div class="spot__pair">
+          <div class="ph ph--spot">イラストA</div>
+          <div class="ph ph--spot">イラストB</div>
+        </div>
+        <p class="note">［内容は準備中］</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 注意事項・緊急連絡先 -->
+  <section id="notice" class="section section--last">
+    <div class="section__head">
+      <span class="section__num">06</span>
+      <h2>注意事項・緊急連絡先</h2>
+    </div>
+    <div class="notices">
+      <p>［注意事項］</p>
+      <p>［注意事項］</p>
+      <p>［注意事項］</p>
+    </div>
+    <div class="emergency">
+      <p class="emergency__title">緊急時・体調不良のとき</p>
+      <p>［連絡先・救護の場所など］</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer__stripe" aria-hidden="true"></div>
+  <div class="footer__inner wrap">
+    <span>［体育祭の名前］　しおり班</span>
+    <a href="#top">ページの先頭へ</a>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
