@@ -1,5 +1,9 @@
 # 見本デザイン(公開しない)
 reference/
 
+# 開発メモ・報告(公開しない)
+開発日記/
+claude-code-report.md
+
 # macOS
 .DS_Store
