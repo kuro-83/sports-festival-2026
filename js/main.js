@@ -185,7 +185,7 @@ function setMenuOpen(open) {
 menuBtn.addEventListener('click', () => {
   const open = menu.hidden;
   setMenuOpen(open);
-  if (open) menu.querySelector('a')?.focus();
+  if (open) menu.querySelector('a')?.focus({ preventScroll: true });
 });
 
 // 項目をタップしたら閉じる(移動はリンクのふつうの動きにまかせる)
@@ -196,7 +196,8 @@ menu.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !menu.hidden) {
     setMenuOpen(false);
-    menuBtn.focus();
+    // ふつうに focus すると固定ヘッダーと scroll-padding の関係でページが上に動くので止める
+    menuBtn.focus({ preventScroll: true });
   }
 });
 
