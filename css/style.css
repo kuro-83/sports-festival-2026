@@ -30,11 +30,12 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html {
-  scroll-behavior: smooth;
-  /* ページ内リンクで飛んだ時、固定ヘッダーの下に見出しが隠れないように */
-  scroll-padding-top: calc(var(--header-h) + 8px);
-}
+html { scroll-behavior: smooth; }
+
+/* ページ内リンクで飛んだ時、固定ヘッダーの下に見出しが隠れないように
+   (html の scroll-padding にすると、ヘッダーのボタンを押しただけでページが動くので、飛び先側に付ける) */
+.section,
+.toc { scroll-margin-top: calc(var(--header-h) + 8px); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }

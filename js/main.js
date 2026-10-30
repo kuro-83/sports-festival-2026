@@ -196,7 +196,6 @@ menu.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !menu.hidden) {
     setMenuOpen(false);
-    // ふつうに focus すると固定ヘッダーと scroll-padding の関係でページが上に動くので止める
     menuBtn.focus({ preventScroll: true });
   }
 });
