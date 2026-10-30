@@ -8,7 +8,7 @@
 <meta name="description" content="体育祭のしおり。施設案内・タイムテーブル・競技説明など。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@800;900&family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,11 +17,26 @@
 <!-- ?check を付けた時だけ、未入力の一覧がここに出る -->
 <div id="check" hidden></div>
 
-<header id="top" class="cover">
-  <div class="cover__bar wrap">
-    <span class="cover__brand" id="site-brand"></span>
-    <a href="#toc" class="cover__toc-link">目次</a>
+<!-- 上に固定するヘッダー -->
+<div class="topbar">
+  <div class="topbar__inner wrap">
+    <span class="topbar__brand" id="site-brand"></span>
+    <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu" aria-label="メニューを開く">
+      <svg class="menu-btn__open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+      <svg class="menu-btn__close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+    </button>
   </div>
+</div>
+
+<!-- ハンバーガーで開くメニュー。項目は目次と同じものを js/main.js が入れる -->
+<nav class="menu" id="menu" aria-label="メニュー" hidden>
+  <div class="wrap">
+    <p class="eyebrow">MENU</p>
+    <div class="menu__list" id="menu-list"></div>
+  </div>
+</nav>
+
+<header id="top" class="cover">
   <div class="cover__body wrap">
     <div class="cover__text">
       <div class="cover__date">
@@ -48,7 +63,7 @@
       <a href="#events"><span class="num"></span>競技説明＆みどころ</a>
       <a href="#others"><span class="num"></span>ほかの企画</a>
       <a href="#fun"><span class="num"></span>おたのしみ</a>
-      <a href="#notice"><span class="num"></span>注意事項・連絡先</a>
+      <a href="#notice"><span class="num"></span>注意事項</a>
     </div>
   </nav>
 
@@ -76,8 +91,11 @@
       </div>
       <div class="track">
         <div class="track__lane" aria-hidden="true"></div>
-        <div class="track__line" aria-hidden="true"></div>
-        <div class="track__goal" aria-hidden="true"></div>
+        <svg class="track__goal" viewBox="0 0 20 28" aria-hidden="true">
+          <rect x="1" y="0" width="1.5" height="28" fill="currentColor"></rect>
+          <rect x="2.5" y="1" width="16" height="12" fill="#fff" stroke="currentColor" stroke-width="1"></rect>
+          <path d="M2.5 1h4v4h-4zM10.5 1h4v4h-4zM6.5 5h4v4h-4zM14.5 5h4v4h-4zM2.5 9h4v4h-4zM10.5 9h4v4h-4z" fill="currentColor"></path>
+        </svg>
         <div class="track__runner" id="runner" aria-hidden="true">キャラ</div>
       </div>
       <div class="track__ends"><span>START</span><span>GOAL</span></div>
@@ -85,10 +103,6 @@
     <p class="note" id="now-note">※時刻・プログラムは仮。当日は実際の時刻で自動的に動く</p>
 
     <ol class="program" id="program"></ol>
-
-    <a href="#events" class="arrow-link">競技の説明へ
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"></path></svg>
-    </a>
   </section>
 
   <!-- 競技説明＆みどころ -->
@@ -133,23 +147,19 @@
     </div>
   </section>
 
-  <!-- 注意事項・緊急連絡先 -->
+  <!-- 注意事項 -->
   <section id="notice" class="section">
     <div class="section__head">
       <span class="section__num"></span>
-      <h2>注意事項・緊急連絡先</h2>
+      <h2>注意事項</h2>
     </div>
     <div class="notices" id="notices-list"></div>
-    <div class="emergency" id="emergency">
-      <p class="emergency__title" id="emergency-title"></p>
-      <p id="emergency-text"></p>
-    </div>
   </section>
 
 </main>
 
 <footer class="footer">
-  <div class="footer__stripe" aria-hidden="true"></div>
+  <div class="track-stripe" aria-hidden="true"></div>
   <div class="footer__inner wrap">
     <span id="footer-name"></span>
     <a href="#top">ページの先頭へ</a>

@@ -3,6 +3,7 @@
    ・js/content.js(CONTENT)の中身でページを組み立てる
    ・タイムテーブル + 「いまここ」
    ・応援ボタン
+   ・ハンバーガーメニュー
    ・入れ忘れチェック
    中身を変えたい時は js/content.js だけ書き換える。このファイルは触らなくていい
    テスト: URL の末尾に ?time=10:30 を付けると、当日のその時刻として表示する
@@ -91,7 +92,6 @@ function renderPlaces() {
 function renderEvents() {
   const events = CONTENT.events;
   $('events').hidden = events.length === 0;
-  document.querySelector('#timetable .arrow-link').hidden = events.length === 0;
 
   $('events-list').replaceChildren(...events.map((ev, i) => {
     const article = el('article', 'event');
@@ -137,25 +137,19 @@ function renderFun() {
   setOptionalText($('spot-text'), spotText);
 }
 
-/* ---------- 注意事項・緊急連絡先 ---------- */
+/* ---------- 注意事項 ---------- */
 function renderNotices() {
-  const { notices, emergency } = CONTENT;
-  $('notice').hidden = notices.length === 0 && !emergency.text;
-
-  const box = $('notices-list');
-  box.hidden = notices.length === 0;
-  box.replaceChildren(...notices.map((text) => el('p', '', text)));
-
-  $('emergency').hidden = !emergency.text;
-  setText($('emergency-title'), emergency.title);
-  setText($('emergency-text'), emergency.text);
+  const { notices } = CONTENT;
+  $('notice').hidden = notices.length === 0;
+  $('notices-list').replaceChildren(...notices.map((text) => el('p', '', text)));
 }
 
-/* ---------- 目次と番号 ----------
-   表示されているセクションだけで 01 から振り直す */
+/* ---------- 目次・メニューと番号 ----------
+   表示されているセクションだけで 01 から振り直す。ハンバーガーメニューにも同じ項目を並べる */
 function renderNumbers() {
   let count = 0;
   let last = null;
+  const menuItems = [];
   document.querySelectorAll('.toc__list a').forEach((link) => {
     const section = document.querySelector(link.getAttribute('href'));
     section.classList.remove('section--last');
@@ -163,12 +157,48 @@ function renderNumbers() {
     if (section.hidden) return;
 
     count += 1;
-    setText(link.querySelector('.num'), pad(count));
-    setText(section.querySelector('.section__num'), pad(count));
+    const num = pad(count);
+    setText(link.querySelector('.num'), num);
+    setText(section.querySelector('.section__num'), num);
     last = section;
+
+    const item = el('a', '', link.lastChild.textContent);
+    item.href = link.getAttribute('href');
+    item.prepend(el('span', 'num', num));
+    menuItems.push(item);
   });
   if (last) last.classList.add('section--last');
+  $('menu-list').replaceChildren(...menuItems);
 }
+
+/* ---------- ハンバーガーメニュー ---------- */
+const menu = $('menu');
+const menuBtn = $('menu-btn');
+
+function setMenuOpen(open) {
+  menu.hidden = !open;
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
+  document.documentElement.classList.toggle('is-menu-open', open);
+}
+
+menuBtn.addEventListener('click', () => {
+  const open = menu.hidden;
+  setMenuOpen(open);
+  if (open) menu.querySelector('a')?.focus();
+});
+
+// 項目をタップしたら閉じる(移動はリンクのふつうの動きにまかせる)
+menu.addEventListener('click', (e) => {
+  if (e.target.closest('a')) setMenuOpen(false);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !menu.hidden) {
+    setMenuOpen(false);
+    menuBtn.focus();
+  }
+});
 
 /* ---------- タイムテーブル + 「いまここ」 ---------- */
 
@@ -239,7 +269,7 @@ const CHECK_LABELS = {
   program: 'プログラム', label: '名前', runnerImage: '走るキャラ', events: '競技',
   rule: 'ルール', highlight: 'みどころ', image: '挿絵', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotImages: '間違い探しの絵', spotText: '間違い探しの説明',
-  notices: '注意事項', emergency: '緊急連絡先',
+  notices: '注意事項',
 };
 
 // 「競技 2 › ルール」のような読める名前と、「events[1].rule」のようなファイル上の場所

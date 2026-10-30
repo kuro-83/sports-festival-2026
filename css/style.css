@@ -1,35 +1,47 @@
 /* =========================================================
    体育祭しおり
-   色・フォントはここ(:root)だけ変えれば全体に反映される
+   色・フォント・線はここ(:root)だけ変えれば全体に反映される
    ========================================================= */
 :root {
   /* 色 */
-  --c-ink: #111111;        /* 文字・太い罫線 */
+  --c-ink: #111111;        /* 文字・セクション間の線 */
   --c-bg: #FFFFFF;         /* 背景 */
   --c-accent: #0E8A43;     /* 差し色の緑 */
-  --c-accent-light: #6FD99B; /* 黒地の上で使う緑 */
   --c-now-bg: #E3F4E9;     /* 「いまここ」の行の背景 */
   --c-muted: #555555;      /* 補足の文字 */
-  --c-rule: #DDDDDA;       /* 細い罫線 */
+  --c-rule: #DDDDDA;       /* 薄いグレーの線 */
   --c-paper: #F1F1EE;      /* プレースホルダーの斜線 */
 
+  /* 線(ルールは2つだけ) */
+  --line-section: 1px solid var(--c-ink); /* セクションとセクションの間 */
+  --line-item: 1px solid var(--c-rule);   /* セクションの中の区切り */
+
   /* フォント */
-  --f-head: 'Dela Gothic One', sans-serif;  /* 見出し */
-  --f-num: 'Oswald', sans-serif;            /* 数字・英字 */
+  --f-head: 'M PLUS 1', sans-serif;            /* 見出し */
+  --f-num: 'Oswald', sans-serif;               /* 数字・英字 */
   --f-body: 'Zen Kaku Gothic New', sans-serif; /* 本文 */
 
   /* レイアウト */
   --max-w: 1040px;
   --gutter: 16px;
-  --tap: 44px; /* タップしやすい最小の高さ */
+  --tap: 44px;      /* タップしやすい最小の高さ */
+  --header-h: 56px; /* 上に固定したヘッダーの高さ */
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* ページ内リンクで飛んだ時、固定ヘッダーの下に見出しが隠れないように */
+  scroll-padding-top: calc(var(--header-h) + 8px);
+}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/* メニューを開いている間は背面をスクロールさせない
+   (body にも付けると固定ヘッダーが外れるので html だけ) */
+html.is-menu-open { overflow: hidden; }
 
 body {
   margin: 0;
@@ -46,18 +58,18 @@ a:hover { color: var(--c-accent); }
 h1, h2, h3 { margin: 0; font-weight: 400; }
 p { margin: 0; }
 
+/* 中身が空のセクションなどを隠す(display:flex の要素にも効くように) */
+[hidden] { display: none !important; }
+
+/* content.js の文字に \n があれば改行する */
+.pre-line { white-space: pre-line; }
+
 .wrap {
   max-width: var(--max-w);
   margin: 0 auto;
   padding-left: var(--gutter);
   padding-right: var(--gutter);
 }
-
-/* 中身が空のセクションなどを隠す(display:flex の要素にも効くように) */
-[hidden] { display: none !important; }
-
-/* content.js の文字に \n があれば改行する */
-.pre-line { white-space: pre-line; }
 
 .muted { color: var(--c-muted); }
 .note { font-size: 13px; color: var(--c-muted); }
@@ -93,32 +105,83 @@ p { margin: 0; }
   object-fit: cover;
 }
 
-/* ---------- 表紙 ---------- */
-.cover { border-bottom: 2px solid var(--c-ink); }
+/* ---------- 細かいストライプ(表紙の下とフッター) ---------- */
+.track-stripe {
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--c-accent) 0 14px, transparent 14px 20px);
+}
 
-.cover__bar {
+/* ---------- 固定ヘッダー ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--c-bg);
+  border-bottom: var(--line-item);
+}
+.topbar__inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  height: 56px;
-  border-bottom: 1px solid var(--c-ink);
+  height: calc(var(--header-h) - 1px);
 }
-.cover__brand {
+.topbar__brand {
   font-family: var(--f-num);
   font-weight: 700;
   font-size: 16px;
   letter-spacing: 0.08em;
 }
-.cover__toc-link {
+
+.menu-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-right: -10px; /* アイコンの見た目を右端にそろえる */
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-ink);
+  cursor: pointer;
+}
+.menu-btn:hover { color: var(--c-accent); }
+.menu-btn__close { display: none; }
+.menu-btn[aria-expanded="true"] .menu-btn__open { display: none; }
+.menu-btn[aria-expanded="true"] .menu-btn__close { display: block; }
+
+/* ハンバーガーで開くメニュー(ヘッダーの下を全部おおう) */
+.menu {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 19;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--c-bg);
+  padding: 32px 0 48px;
+}
+.menu__list a {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
   min-height: var(--tap);
+  padding: 16px 0;
+  border-bottom: var(--line-item);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 20px;
   text-decoration: none;
 }
+.menu__list .num {
+  font-family: var(--f-num);
+  font-size: 18px;
+  color: var(--c-accent);
+}
 
+/* ---------- 表紙 ---------- */
 .cover__body {
   display: flex;
   flex-wrap: wrap;
@@ -157,6 +220,7 @@ p { margin: 0; }
 }
 .cover__title {
   font-family: var(--f-head);
+  font-weight: 900;
   font-size: clamp(2rem, 5.5vw, 3.4rem);
   line-height: 1.25;
 }
@@ -172,15 +236,10 @@ p { margin: 0; }
   height: 340px;
 }
 
-.track-stripe {
-  height: 18px;
-  background: repeating-linear-gradient(90deg, var(--c-accent) 0 64px, var(--c-bg) 64px 72px);
-}
-
 /* ---------- 目次 ---------- */
 .toc {
   padding: 56px 0;
-  border-bottom: 1px solid var(--c-ink);
+  border-bottom: var(--line-section);
 }
 .toc__list {
   display: grid;
@@ -193,7 +252,7 @@ p { margin: 0; }
   gap: 16px;
   min-height: var(--tap);
   padding: 14px 0;
-  border-top: 1px solid var(--c-ink);
+  border-bottom: var(--line-item);
   font-weight: 700;
   font-size: 18px;
   text-decoration: none;
@@ -210,8 +269,7 @@ p { margin: 0; }
   flex-direction: column;
   gap: 24px;
   padding: 64px 0;
-  border-bottom: 1px solid var(--c-ink);
-  scroll-margin-top: 8px;
+  border-bottom: var(--line-section);
 }
 .section--last { border-bottom: none; }
 
@@ -230,6 +288,7 @@ p { margin: 0; }
 }
 .section__head h2 {
   font-family: var(--f-head);
+  font-weight: 900;
   font-size: 28px;
 }
 
@@ -239,13 +298,12 @@ p { margin: 0; }
 .places {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  border-top: 1px solid var(--c-ink);
 }
 .place {
   display: flex;
   flex-direction: column;
   padding: 14px 16px 14px 0;
-  border-bottom: 1px solid var(--c-rule);
+  border-bottom: var(--line-item);
 }
 .place span { font-size: 14px; color: var(--c-muted); }
 
@@ -253,9 +311,7 @@ p { margin: 0; }
 .now {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px 20px 16px;
-  border: 1px solid var(--c-ink);
+  gap: 8px;
 }
 .now__head {
   display: flex;
@@ -266,29 +322,23 @@ p { margin: 0; }
 }
 .now__label { font-weight: 700; }
 
+/* トラック = 緑の帯 + キャラ + ゴール旗 */
 .track {
   position: relative;
-  height: 96px;
+  height: 76px;
 }
 .track__lane {
   position: absolute;
-  left: 0; right: 0; top: 40px;
-  height: 40px;
+  left: 0; right: 0; top: 60px;
+  height: 10px;
+  border-radius: 5px;
   background: var(--c-accent);
-  border-top: 2px solid var(--c-ink);
-  border-bottom: 2px solid var(--c-ink);
-}
-.track__line {
-  position: absolute;
-  left: 0; right: 0; top: 59px;
-  border-top: 2px dashed var(--c-bg);
 }
 .track__goal {
   position: absolute;
   right: 0; top: 34px;
-  width: 10px; height: 52px;
-  background: repeating-linear-gradient(0deg, var(--c-ink) 0 8px, var(--c-bg) 8px 16px);
-  border: 1px solid var(--c-ink);
+  width: 20px; height: 28px;
+  color: var(--c-ink);
 }
 /* キャラ。left は JS が --progress(0〜1)で動かす */
 .track__runner {
@@ -299,7 +349,7 @@ p { margin: 0; }
   transform: translateX(-50%);
   width: 64px; height: 64px;
   border-radius: 50%;
-  border: 2px dashed var(--c-ink);
+  border: 1px dashed var(--c-ink);
   background: var(--c-bg);
   display: flex;
   align-items: center;
@@ -316,7 +366,8 @@ p { margin: 0; }
   display: flex;
   justify-content: space-between;
   font-family: var(--f-num);
-  font-size: 13px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
   color: var(--c-muted);
 }
 
@@ -324,14 +375,13 @@ p { margin: 0; }
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 2px solid var(--c-ink);
 }
 .program__row {
   display: flex;
   align-items: center;
   gap: 24px;
   padding: 16px 12px;
-  border-bottom: 1px solid var(--c-rule);
+  border-bottom: var(--line-item);
 }
 .program__row.is-now { background: var(--c-now-bg); }
 .program__time {
@@ -351,32 +401,19 @@ p { margin: 0; }
   padding: 2px 10px;
 }
 
-.arrow-link {
-  align-self: flex-start;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: var(--tap);
-  padding: 8px 0;
-  border-bottom: 2px solid var(--c-accent);
-  font-weight: 700;
-  text-decoration: none;
-}
-.arrow-link svg { color: var(--c-accent); }
-
 /* ---------- 03 競技説明 ---------- */
 .events {
   display: flex;
   flex-direction: column;
-  border-top: 2px solid var(--c-ink);
 }
 .event {
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
   padding: 24px 0;
-  border-bottom: 1px solid var(--c-rule);
+  border-bottom: var(--line-item);
 }
+.event:first-child { padding-top: 0; }
 .event__illust {
   flex: 1 1 220px;
   min-width: 0;
@@ -398,17 +435,17 @@ p { margin: 0; }
 }
 .event h3 {
   font-family: var(--f-head);
+  font-weight: 800;
   font-size: 22px;
 }
 
 /* ---------- 04 ほかの企画 ---------- */
-.others { border-top: 2px solid var(--c-ink); }
 .other {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 14px 0;
-  border-bottom: 1px solid var(--c-rule);
+  border-bottom: var(--line-item);
 }
 
 /* ---------- 05 おたのしみ ---------- */
@@ -441,6 +478,7 @@ p { margin: 0; }
   background: var(--c-ink);
   color: var(--c-bg);
   font-family: var(--f-head);
+  font-weight: 900;
   font-size: 20px;
   cursor: pointer;
   touch-action: manipulation; /* 連打でズームしないように */
@@ -462,25 +500,12 @@ p { margin: 0; }
 .ph--spot { height: 180px; }
 
 /* ---------- 06 注意事項 ---------- */
-.notices { border-top: 2px solid var(--c-ink); }
 .notices p {
   padding: 14px 0;
-  border-bottom: 1px solid var(--c-rule);
-}
-.emergency {
-  padding: 24px;
-  background: var(--c-ink);
-  color: var(--c-bg);
-}
-.emergency__title {
-  margin-bottom: 6px;
-  font-weight: 700;
-  color: var(--c-accent-light);
+  border-bottom: var(--line-item);
 }
 
 /* ---------- フッター ---------- */
-.footer { border-top: 2px solid var(--c-ink); }
-.footer__stripe { height: 10px; background: var(--c-accent); }
 .footer__inner {
   display: flex;
   flex-wrap: wrap;
@@ -501,7 +526,7 @@ p { margin: 0; }
 /* ---------- 入れ忘れチェック(?check の時だけ出る) ---------- */
 .check {
   background: var(--c-paper);
-  border-bottom: 2px solid var(--c-ink);
+  border-bottom: var(--line-section);
   font-size: 14px;
 }
 .check__inner { padding-top: 16px; padding-bottom: 16px; }
@@ -530,7 +555,6 @@ p { margin: 0; }
   .section__num { font-size: 36px; }
   .section__head h2 { font-size: 24px; }
   .ph--map { height: 240px; }
-  .now { padding: 16px 14px 12px; }
   .program__row { gap: 14px; padding: 14px 8px; }
   .program__time { min-width: 56px; font-size: 20px; }
   .ph--spot { height: 140px; }
