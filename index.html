@@ -3,68 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>［体育祭の名前］ しおり | SPORTS DAY 2026</title>
-<meta name="description" content="11月27日(金) 体育祭のしおり。施設案内・タイムテーブル・競技説明など。">
+<!-- タイトルと説明は js/content.js の名前・日付から自動で入る -->
+<title>体育祭しおり</title>
+<meta name="description" content="体育祭のしおり。施設案内・タイムテーブル・競技説明など。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- しおりの中身は js/content.js に書く。このファイルは「枠」だけ -->
+
+<!-- ?check を付けた時だけ、未入力の一覧がここに出る -->
+<div id="check" hidden></div>
 
 <header id="top" class="cover">
   <div class="cover__bar wrap">
-    <span class="cover__brand">SPORTS DAY 2026</span>
+    <span class="cover__brand" id="site-brand"></span>
     <a href="#toc" class="cover__toc-link">目次</a>
   </div>
   <div class="cover__body wrap">
     <div class="cover__text">
       <div class="cover__date">
-        <span class="cover__day">11.27</span>
-        <span class="cover__weekday">FRI</span>
+        <span class="cover__day" id="site-day"></span>
+        <span class="cover__weekday" id="site-weekday"></span>
       </div>
-      <h1 class="cover__title">［体育祭の名前］</h1>
-      <p class="cover__slogan">［スローガン・キャッチコピー］</p>
-      <p class="cover__venue">会場　［会場名］</p>
+      <h1 class="cover__title" id="site-name"></h1>
+      <p class="cover__slogan" id="site-slogan"></p>
+      <p class="cover__venue" id="site-venue"></p>
     </div>
-    <!-- イラストができたら中身を <img src="img/cover.png" alt="…"> に差し替える -->
-    <div class="ph cover__illust">表紙イラスト<br>(イラスト班)</div>
+    <div class="ph cover__illust" id="cover-image">表紙イラスト<br>(イラスト班)</div>
   </div>
   <div class="track-stripe" aria-hidden="true"></div>
 </header>
 
 <main class="wrap">
 
+  <!-- 番号(01〜)は、表示されているセクションだけで自動で振られる -->
   <nav id="toc" class="toc" aria-label="目次">
     <p class="eyebrow">CONTENTS</p>
     <div class="toc__list">
-      <a href="#map"><span class="num">01</span>施設案内</a>
-      <a href="#timetable"><span class="num">02</span>タイムテーブル</a>
-      <a href="#events"><span class="num">03</span>競技説明＆みどころ</a>
-      <a href="#others"><span class="num">04</span>ほかの企画</a>
-      <a href="#fun"><span class="num">05</span>おたのしみ</a>
-      <a href="#notice"><span class="num">06</span>注意事項・連絡先</a>
+      <a href="#map"><span class="num"></span>施設案内</a>
+      <a href="#timetable"><span class="num"></span>タイムテーブル</a>
+      <a href="#events"><span class="num"></span>競技説明＆みどころ</a>
+      <a href="#others"><span class="num"></span>ほかの企画</a>
+      <a href="#fun"><span class="num"></span>おたのしみ</a>
+      <a href="#notice"><span class="num"></span>注意事項・連絡先</a>
     </div>
   </nav>
 
-  <!-- 01 施設案内 -->
+  <!-- 施設案内 -->
   <section id="map" class="section">
     <div class="section__head">
-      <span class="section__num">01</span>
+      <span class="section__num"></span>
       <h2>施設案内</h2>
     </div>
-    <div class="ph ph--map">簡易マップ</div>
-    <div class="places">
-      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
-      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
-      <div class="place"><strong>［場所名］</strong><span>［なにがあるか］</span></div>
-    </div>
+    <div class="ph ph--map" id="map-image">簡易マップ</div>
+    <div class="places" id="places-list"></div>
   </section>
 
-  <!-- 02 タイムテーブル(時刻とプログラム名は js/main.js の PROGRAM で管理) -->
+  <!-- タイムテーブル -->
   <section id="timetable" class="section">
     <div class="section__head">
-      <span class="section__num">02</span>
+      <span class="section__num"></span>
       <h2>タイムテーブル</h2>
     </div>
 
@@ -77,73 +78,41 @@
         <div class="track__lane" aria-hidden="true"></div>
         <div class="track__line" aria-hidden="true"></div>
         <div class="track__goal" aria-hidden="true"></div>
-        <!-- キャラの絵ができたら中身を <img src="img/runner.png" alt=""> に差し替える -->
         <div class="track__runner" id="runner" aria-hidden="true">キャラ</div>
       </div>
       <div class="track__ends"><span>START</span><span>GOAL</span></div>
     </div>
     <p class="note" id="now-note">※時刻・プログラムは仮。当日は実際の時刻で自動的に動く</p>
 
-    <ol class="program" id="program">
-      <!-- js/main.js が PROGRAM から行を作る。JSが動かない時のための仮表示 -->
-      <li class="program__row"><span class="program__time">-</span><span class="program__name">タイムテーブルを読み込み中</span></li>
-    </ol>
+    <ol class="program" id="program"></ol>
 
     <a href="#events" class="arrow-link">競技の説明へ
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"></path></svg>
     </a>
   </section>
 
-  <!-- 03 競技説明＆みどころ -->
+  <!-- 競技説明＆みどころ -->
   <section id="events" class="section">
     <div class="section__head">
-      <span class="section__num">03</span>
+      <span class="section__num"></span>
       <h2>競技説明＆みどころ</h2>
     </div>
-    <div class="events">
-      <article class="event">
-        <div class="ph event__illust">挿絵</div>
-        <div class="event__body">
-          <span class="event__no">EVENT 01</span>
-          <h3>［競技名］</h3>
-          <p><strong>ルール</strong>　［かんたんなルール］</p>
-          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
-        </div>
-      </article>
-      <article class="event">
-        <div class="ph event__illust">挿絵</div>
-        <div class="event__body">
-          <span class="event__no">EVENT 02</span>
-          <h3>［競技名］</h3>
-          <p><strong>ルール</strong>　［かんたんなルール］</p>
-          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
-        </div>
-      </article>
-      <article class="event">
-        <div class="ph event__illust">挿絵</div>
-        <div class="event__body">
-          <span class="event__no">EVENT 03</span>
-          <h3>［競技名］</h3>
-          <p><strong>ルール</strong>　［かんたんなルール］</p>
-          <p><strong class="accent">みどころ</strong>　［ここに注目！］</p>
-        </div>
-      </article>
-    </div>
+    <div class="events" id="events-list"></div>
   </section>
 
-  <!-- 04 ほかの企画 -->
+  <!-- ほかの企画 -->
   <section id="others" class="section">
     <div class="section__head">
-      <span class="section__num">04</span>
+      <span class="section__num"></span>
       <h2>ほかの企画</h2>
     </div>
-    <p class="muted">［他の班から載せてほしい情報があればここに］</p>
+    <div class="others" id="others-list"></div>
   </section>
 
-  <!-- 05 おたのしみ -->
+  <!-- おたのしみ -->
   <section id="fun" class="section">
     <div class="section__head">
-      <span class="section__num">05</span>
+      <span class="section__num"></span>
       <h2>おたのしみ</h2>
     </div>
     <div class="fun">
@@ -156,28 +125,24 @@
       <div class="spot">
         <h3>間違い探し</h3>
         <div class="spot__pair">
-          <div class="ph ph--spot">イラストA</div>
-          <div class="ph ph--spot">イラストB</div>
+          <div class="ph ph--spot" id="spot-a">イラストA</div>
+          <div class="ph ph--spot" id="spot-b">イラストB</div>
         </div>
-        <p class="note">［内容は準備中］</p>
+        <p class="note" id="spot-text"></p>
       </div>
     </div>
   </section>
 
-  <!-- 06 注意事項・緊急連絡先 -->
-  <section id="notice" class="section section--last">
+  <!-- 注意事項・緊急連絡先 -->
+  <section id="notice" class="section">
     <div class="section__head">
-      <span class="section__num">06</span>
+      <span class="section__num"></span>
       <h2>注意事項・緊急連絡先</h2>
     </div>
-    <div class="notices">
-      <p>［注意事項］</p>
-      <p>［注意事項］</p>
-      <p>［注意事項］</p>
-    </div>
-    <div class="emergency">
-      <p class="emergency__title">緊急時・体調不良のとき</p>
-      <p>［連絡先・救護の場所など］</p>
+    <div class="notices" id="notices-list"></div>
+    <div class="emergency" id="emergency">
+      <p class="emergency__title" id="emergency-title"></p>
+      <p id="emergency-text"></p>
     </div>
   </section>
 
@@ -186,11 +151,12 @@
 <footer class="footer">
   <div class="footer__stripe" aria-hidden="true"></div>
   <div class="footer__inner wrap">
-    <span>［体育祭の名前］　しおり班</span>
+    <span id="footer-name"></span>
     <a href="#top">ページの先頭へ</a>
   </div>
 </footer>
 
+<script src="js/content.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

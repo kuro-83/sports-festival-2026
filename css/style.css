@@ -53,6 +53,12 @@ p { margin: 0; }
   padding-right: var(--gutter);
 }
 
+/* 中身が空のセクションなどを隠す(display:flex の要素にも効くように) */
+[hidden] { display: none !important; }
+
+/* content.js の文字に \n があれば改行する */
+.pre-line { white-space: pre-line; }
+
 .muted { color: var(--c-muted); }
 .note { font-size: 13px; color: var(--c-muted); }
 .accent { color: var(--c-accent); }
@@ -395,6 +401,16 @@ p { margin: 0; }
   font-size: 22px;
 }
 
+/* ---------- 04 ほかの企画 ---------- */
+.others { border-top: 2px solid var(--c-ink); }
+.other {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--c-rule);
+}
+
 /* ---------- 05 おたのしみ ---------- */
 .fun {
   display: flex;
@@ -480,6 +496,29 @@ p { margin: 0; }
   align-items: center;
   min-height: var(--tap);
   font-weight: 700;
+}
+
+/* ---------- 入れ忘れチェック(?check の時だけ出る) ---------- */
+.check {
+  background: var(--c-paper);
+  border-bottom: 2px solid var(--c-ink);
+  font-size: 14px;
+}
+.check__inner { padding-top: 16px; padding-bottom: 16px; }
+.check__title {
+  font-family: var(--f-num);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+}
+.check__heading { margin-top: 10px; font-weight: 700; }
+.check__list { margin: 4px 0 0; padding-left: 1.4em; }
+.check__list li { overflow-wrap: anywhere; }
+.check__value { margin-left: 8px; }
+.check__list code {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--c-muted);
 }
 
 /* ---------- スマホ調整 ---------- */
