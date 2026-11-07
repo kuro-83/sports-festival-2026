@@ -2,7 +2,8 @@
    体育祭しおり
    ・js/content.js(CONTENT)の中身でページを組み立てる
    ・タイムテーブル + 「いまここ」
-   ・応援ボタン
+   ・応援ボタン(キャラの反応つき)
+   ・隠れキャラ探し、謎解きの答え合わせ
    ・ハンバーガーメニュー
    ・入れ忘れチェック
    中身を変えたい時は js/content.js だけ書き換える。このファイルは触らなくていい
@@ -46,6 +47,29 @@ function renderImage(box, image) {
 function setOptionalText(node, text) {
   node.hidden = !text;
   if (text) setText(node, text);
+}
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- このブラウザに保存(隠れキャラ・謎解き) ----------
+   localStorage が使えない環境(プライベートモードなど)でもエラーにせず、保存なしで遊べるようにする */
+const STORE_PREFIX = 'sports-festival-2026:';
+
+function loadList(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(STORE_PREFIX + key));
+    return Array.isArray(value) ? value : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveList(key, list) {
+  try {
+    localStorage.setItem(STORE_PREFIX + key, JSON.stringify(list));
+  } catch (e) {
+    // 保存できなくても、そのページを開いている間は遊べる
+  }
 }
 
 /* ---------- 日付 ---------- */
@@ -135,6 +159,239 @@ function renderFun() {
   renderImage($('spot-a'), spotImages[0]);
   renderImage($('spot-b'), spotImages[1]);
   setOptionalText($('spot-text'), spotText);
+}
+
+/* ---------- 隠れキャラ探し ---------- */
+const hiddenFound = new Set(loadList('hidden-chars'));
+let hiddenPlaced = [];   // 実際に置けたキャラの番号
+let hiddenUnplaced = []; // 置き場所のセクションが無い・非表示で置けなかったもの(?check で出す)
+let bubbleTimer;
+
+function closeBubbles(except) {
+  document.querySelectorAll('.hide__bubble').forEach((b) => {
+    if (b !== except) b.hidden = true;
+  });
+}
+
+function showBubble(bubble, text) {
+  closeBubbles(bubble);
+  bubble.hidden = !text;
+  if (text) setText(bubble, text);
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => { bubble.hidden = true; }, 4000);
+}
+
+function markFound(btn, i) {
+  btn.parentElement.classList.add('is-found');
+  btn.setAttribute('aria-label', `隠れキャラ ${i + 1}(見つけた)`);
+  const face = btn.firstChild;
+  if (!face.querySelector('img')) face.textContent = '✓';
+}
+
+function renderHiddenChars() {
+  hiddenPlaced = [];
+  hiddenUnplaced = [];
+  CONTENT.hiddenChars.forEach((c, i) => {
+    const section = document.getElementById(c.section);
+    if (!section || !section.classList.contains('section') || section.hidden) {
+      hiddenUnplaced.push(i);
+      return;
+    }
+    const where = c.where === 'bottom' ? 'bottom' : 'head';
+    const box = el('span', `hide hide--${where}`);
+
+    const btn = el('button', 'hide__btn');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);
+    const face = el('span', 'hide__face', '?');
+    renderImage(face, c.image);
+    btn.append(face);
+
+    const bubble = el('span', 'bubble hide__bubble');
+    bubble.setAttribute('aria-live', 'polite');
+    bubble.hidden = true;
+
+    btn.addEventListener('click', () => {
+      showBubble(bubble, c.line);
+      if (hiddenFound.has(i)) return;
+      hiddenFound.add(i);
+      saveList('hidden-chars', [...hiddenFound]);
+      markFound(btn, i);
+      updateHunt(true);
+    });
+
+    box.append(btn, bubble);
+    if (where === 'head') section.querySelector('.section__head').append(box);
+    else section.append(box);
+    if (hiddenFound.has(i)) markFound(btn, i);
+    hiddenPlaced.push(i);
+  });
+  updateHunt(false);
+}
+
+// 吹き出しの外をタップしたら閉じる
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.hide')) closeBubbles();
+});
+
+// おたのしみの「隠れキャラ 1 / 3 見つけた」。celebrate = 今ちょうど全部そろった時は紙吹雪
+function updateHunt(celebrate) {
+  const total = hiddenPlaced.length;
+  const count = hiddenPlaced.filter((i) => hiddenFound.has(i)).length;
+  const done = total > 0 && count === total;
+  $('hunt').hidden = total === 0;
+  $('hunt').classList.toggle('is-done', done);
+  setText($('hunt-count'), `隠れキャラ ${count} / ${total} 見つけた`);
+  setOptionalText($('hunt-done'), done ? CONTENT.hiddenCharsDone : '');
+  if (done && celebrate) confetti();
+}
+
+// 軽い紙吹雪(動きを減らす設定の時は出さない)
+function confetti() {
+  if (REDUCED_MOTION) return;
+  const colors = ['var(--c-accent)', 'var(--c-ink)', 'var(--c-now-bg)', 'var(--c-rule)'];
+  const box = el('div', 'confetti');
+  box.setAttribute('aria-hidden', 'true');
+  for (let n = 0; n < 40; n += 1) {
+    const piece = el('span');
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[n % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.5}s`;
+    piece.style.animationDuration = `${1.6 + Math.random() * 1}s`;
+    piece.style.setProperty('--spin', `${Math.round(Math.random() * 720 - 360)}deg`);
+    box.append(piece);
+  }
+  document.body.append(box);
+  setTimeout(() => box.remove(), 3500);
+}
+
+/* ---------- 謎解きの答え合わせ ---------- */
+
+// 前後の空白・全角半角・カタカナ/ひらがな・大文字小文字の違いをなくしてから比べる
+// (途中の空白も無視する)
+function normalizeAnswer(text) {
+  return String(text)
+    .normalize('NFKC')
+    .replace(/\s+/g, '')
+    .toLowerCase()
+    .replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+function button(className, text) {
+  const btn = el('button', className, text);
+  btn.type = 'button';
+  return btn;
+}
+
+function renderPuzzles() {
+  const puzzles = CONTENT.puzzles;
+  const solved = new Set(loadList('puzzles'));
+  $('puzzles').hidden = puzzles.length === 0;
+
+  $('puzzles-list').replaceChildren(...puzzles.map((pz, i) => {
+    const answers = [].concat(pz.answers).map(normalizeAnswer);
+    const item = el('article', 'puzzle');
+
+    const head = el('div', 'puzzle__head');
+    head.append(el('span', 'puzzle__no', `Q${i + 1}`), el('strong', 'puzzle__title', pz.title),
+      el('span', 'puzzle__badge', '正解済み'));
+    item.append(head);
+    if (pz.note) item.append(el('p', 'note', pz.note));
+
+    // 入力欄 + 答え合わせ(Enter でも答え合わせできるよう form にする)
+    const form = el('form', 'puzzle__form');
+    const input = el('input', 'puzzle__input');
+    input.type = 'text';
+    input.id = `puzzle-${i}`;
+    input.autocomplete = 'off';
+    input.placeholder = '答えを入力';
+    const label = el('label', 'visually-hidden', `Q${i + 1} の答え`);
+    label.htmlFor = input.id;
+    form.append(label, input, el('button', 'puzzle__submit', '答え合わせ'));
+
+    const result = el('div', 'puzzle__result');
+    result.setAttribute('aria-live', 'polite');
+
+    const showResult = (ok) => {
+      if (ok) {
+        result.replaceChildren(el('p', 'puzzle__ok', pz.correct));
+        if (pz.explain) result.append(el('p', 'puzzle__explain', pz.explain));
+      } else {
+        result.replaceChildren(el('p', 'puzzle__ng', CONTENT.puzzleWrong));
+      }
+    };
+    const setSolved = () => {
+      item.classList.add('is-solved');
+      solved.add(i);
+      saveList('puzzles', [...solved]);
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const value = normalizeAnswer(input.value);
+      if (!value) {
+        result.replaceChildren(el('p', 'puzzle__ng', '答えを入れてね'));
+        return;
+      }
+      const ok = answers.includes(value);
+      showResult(ok);
+      if (ok) setSolved();
+    });
+
+    // ヒント・答えを見る(答えは一度確認をはさむ)
+    const tools = el('div', 'puzzle__tools');
+    const hint = el('p', 'puzzle__hint', `ヒント:${pz.hint}`);
+    hint.hidden = true;
+    if (pz.hint) {
+      const hintBtn = button('btn-sub', 'ヒントを見る');
+      hintBtn.addEventListener('click', () => {
+        hint.hidden = false;
+        hintBtn.hidden = true;
+      });
+      tools.append(hintBtn);
+    }
+    const revealBtn = button('btn-sub', '答えを見る');
+    tools.append(revealBtn);
+
+    const confirmBox = el('div', 'puzzle__confirm');
+    confirmBox.hidden = true;
+    const yesBtn = button('btn-sub btn-sub--ink', '見る');
+    const noBtn = button('btn-sub', 'やめる');
+    const confirmBtns = el('div', 'puzzle__tools');
+    confirmBtns.append(yesBtn, noBtn);
+    confirmBox.append(el('p', '', '答えを見ちゃう？自分で解きたい人は「やめる」を押してね'), confirmBtns);
+
+    const answerBox = el('div', 'puzzle__answer');
+    answerBox.hidden = true;
+    answerBox.tabIndex = -1;
+    answerBox.append(el('p', '', `答え:${[].concat(pz.answers)[0] || ''}`));
+    if (pz.explain) answerBox.append(el('p', 'puzzle__explain', pz.explain));
+
+    revealBtn.addEventListener('click', () => {
+      confirmBox.hidden = false;
+      revealBtn.hidden = true;
+      noBtn.focus();
+    });
+    noBtn.addEventListener('click', () => {
+      confirmBox.hidden = true;
+      revealBtn.hidden = false;
+      revealBtn.focus();
+    });
+    yesBtn.addEventListener('click', () => {
+      confirmBox.hidden = true;
+      answerBox.hidden = false;
+      answerBox.focus();
+    });
+
+    item.append(form, result, tools, hint, confirmBox, answerBox);
+
+    // 前に正解していたら、正解の表示から始める
+    if (solved.has(i)) {
+      item.classList.add('is-solved');
+      showResult(true);
+    }
+    return item;
+  }));
 }
 
 /* ---------- 注意事項 ---------- */
@@ -267,9 +524,13 @@ const CHECK_LABELS = {
   coverImage: '表紙イラスト', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', label: '名前', runnerImage: '走るキャラ', events: '競技',
-  rule: 'ルール', highlight: 'みどころ', image: '挿絵', others: 'ほかの企画',
+  rule: 'ルール', highlight: 'みどころ', image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotImages: '間違い探しの絵', spotText: '間違い探しの説明',
   notices: '注意事項',
+  cheer: '応援ボタン', charImage: 'キャラ', lines: '回数ごとのセリフ', line: 'セリフ',
+  hiddenChars: '隠れキャラ', section: '置く場所', hiddenCharsDone: '全部見つけた時のメッセージ',
+  puzzles: '謎解き', note: '補足', answers: '正解', correct: '正解のメッセージ',
+  hint: 'ヒント', explain: '解説', puzzleWrong: '不正解の一言',
 };
 
 // 「競技 2 › ルール」のような読める名前と、「events[1].rule」のようなファイル上の場所
@@ -323,6 +584,12 @@ function renderCheck() {
   };
   addList('まだ［］のまま残っている項目', found.placeholders, (item) => item.value);
   addList('画像が未設定の場所', found.images);
+  // 置き場所のセクションが無い(または空で非表示の)隠れキャラ。ある時だけ出す
+  if (hiddenUnplaced.length > 0) {
+    addList('置き場所が見つからない隠れキャラ',
+      hiddenUnplaced.map((i) => ({ path: ['hiddenChars', i, 'section'], value: CONTENT.hiddenChars[i].section })),
+      (item) => `'${item.value}'`);
+  }
 
   box.replaceChildren(inner);
   box.className = 'check';
@@ -339,6 +606,8 @@ renderNotices();
 renderImage($('runner'), CONTENT.timetable.runnerImage);
 $('timetable').hidden = CONTENT.timetable.program.length === 0;
 renderNumbers();
+renderHiddenChars();
+renderPuzzles();
 renderCheck();
 
 if (CONTENT.timetable.program.length > 0) {
@@ -349,7 +618,27 @@ if (CONTENT.timetable.program.length > 0) {
 /* ---------- 応援ボタン(保存・集計はしない) ---------- */
 let cheers = 0;
 const cheerCount = $('cheer-count');
+const cheerChar = $('cheer-char');
+renderImage(cheerChar, CONTENT.cheer.charImage);
+
+// 押した回数に合うセリフ(from が回数以下のうち、一番大きいもの)
+function updateCheerLine() {
+  let best = null;
+  CONTENT.cheer.lines.forEach((l) => {
+    if (cheers >= l.from && (!best || l.from >= best.from)) best = l;
+  });
+  const line = best ? best.line : '';
+  const bubble = $('cheer-line');
+  if (bubble.textContent !== line || !line) setOptionalText(bubble, line);
+}
+updateCheerLine();
+
 $('cheer-btn').addEventListener('click', () => {
   cheers += 1;
   cheerCount.textContent = pad(cheers, 3);
+  updateCheerLine();
+  // ぴょんと跳ねる(連打しても毎回最初から)
+  cheerChar.classList.remove('is-jump');
+  void cheerChar.offsetWidth;
+  cheerChar.classList.add('is-jump');
 });
