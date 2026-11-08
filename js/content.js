@@ -107,6 +107,9 @@ const CONTENT = {
   /* ---------- おたのしみ:隠れキャラ探し ---------- */
   // イラストの枠の後ろにキャラが隠れて、ふちから顔だけ出している。タップすると出てきてセリフを言う
   // 空 [] にすると、隠れキャラも「おたのしみ」の隠れキャラ探しの欄も出なくなる
+  // 場所の決め方は2通り(下の hiddenCharsRandom で切り替え)
+  //   ランダム(true) … 開くたびに hiddenCharFrames の枠からランダムに選ぶ(1つの枠に1体、上から顔を出す)。frame / side / pos は使わない
+  //   固定(false)    … 各キャラの frame / side / pos の場所に隠れる
   // frame = 隠れる枠。'cover' 表紙イラスト / 'map' 簡易マップ / 'event-1' 1つめの競技の挿絵('event-2' は2つめ…)
   // side  = 顔を出す向き。'top'(枠の上) / 'left'(枠の左) / 'right'(枠の右)。左右は見える所が細いので、目立たせたい時は 'top'
   // pos   = ふちのどのあたりか。'start'(上か左のはし寄り) / 'center'(真ん中) / 'end'(下か右のはし寄り)
@@ -118,6 +121,11 @@ const CONTENT = {
     { frame: 'map', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ2］' },
     { frame: 'event-2', side: 'top', pos: 'start', image: { src: '', alt: '' }, line: '［セリフ3］' },
   ],
+  // true = 開くたびにランダムな場所に隠れる / false = 上の frame / side / pos の固定の場所
+  hiddenCharsRandom: true,
+  // ランダムの時に隠れてよい枠の候補。'events' は競技の挿絵ぜんぶ(競技の数に合わせて増える)
+  // 枠の数がキャラより少ない時は、出せる数だけ出る(?check に出る)
+  hiddenCharFrames: ['cover', 'map', 'events'],
   // 「隠れキャラ探し」の見出しの下の1行の説明。空にすると消える
   hiddenCharsText: 'イラストのうしろに、キャラが隠れてるよ',
   // 全部見つけた時に出る、緑の文字1行のメッセージ(紙吹雪も出る)

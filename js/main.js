@@ -185,6 +185,7 @@ const PEEK_AT = { start: '18%', center: '50%', end: '82%' };
 const hiddenFound = new Set(loadList(HIDDEN_KEY));
 let hiddenPlaced = [];   // 実際に隠せたキャラの番号
 let hiddenUnplaced = []; // 隠れる枠が無い・非表示で隠せなかったもの(?check で出す)
+let hiddenShort = false;  // ランダムで、候補の枠がキャラの数より少なかった
 
 function markFound(peek, btn, i) {
   peek.classList.add('is-found');
@@ -192,17 +193,48 @@ function markFound(peek, btn, i) {
   if (!peek.querySelector('img')) peek.textContent = '✓';
 }
 
+// 表示されている枠だけ(セクションが空で消えている枠は使えない)
+function visibleFrame(name) {
+  const frame = document.getElementById(`frame-${name}`);
+  return frame && !frame.closest('[hidden]') ? frame : null;
+}
+
+// ランダムの時に隠れてよい枠。'events' は競技の挿絵ぜんぶ
+function randomFrameCandidates() {
+  const names = (CONTENT.hiddenCharFrames || []).flatMap((name) => (name === 'events'
+    ? CONTENT.events.map((_, n) => `event-${n + 1}`)
+    : [name]));
+  return [...new Set(names)].map(visibleFrame).filter(Boolean);
+}
+
+function shuffle(list) {
+  for (let n = list.length - 1; n > 0; n--) {
+    const m = Math.floor(Math.random() * (n + 1));
+    [list[n], list[m]] = [list[m], list[n]];
+  }
+  return list;
+}
+
 function renderHiddenChars() {
   hiddenPlaced = [];
   hiddenUnplaced = [];
+  hiddenShort = false;
+  // ランダムなら、候補の枠を混ぜて1体に1つずつ配る(1つの枠に2体入らない)。向きは上だけ
+  const random = CONTENT.hiddenCharsRandom;
+  const pool = random ? shuffle(randomFrameCandidates()) : [];
+  const posNames = Object.keys(PEEK_AT);
   CONTENT.hiddenChars.forEach((c, i) => {
-    const frame = document.getElementById(`frame-${c.frame}`);
-    if (!frame || frame.closest('[hidden]')) {
+    const frame = random ? pool[i] : visibleFrame(c.frame);
+    if (!frame) {
       hiddenUnplaced.push(i);
+      hiddenShort = random;
       return;
     }
-    const side = PEEK_SIDES.includes(c.side) ? c.side : 'top';
-    const pos = PEEK_AT[c.pos] ? c.pos : 'center';
+    const side = random ? 'top' : (PEEK_SIDES.includes(c.side) ? c.side : 'top');
+    const pos = random
+      ? posNames[Math.floor(Math.random() * posNames.length)]
+      : (PEEK_AT[c.pos] ? c.pos : 'center');
+    frame.dataset.hiddenChar = `${i + 1}:${pos}`; // 確認用(どの枠に何体目がいるか)
 
     // キャラ本体(枠の後ろ)
     const peek = el('span', `peek peek--${side}`, '?');
@@ -410,6 +442,7 @@ const CHECK_LABELS = {
   notices: '注意事項',
   hiddenChars: '隠れキャラ', frame: '隠れる枠', line: 'セリフ',
   hiddenCharsText: '隠れキャラ探しの説明', hiddenCharsDone: '全部見つけた時のメッセージ',
+  hiddenCharsRandom: '隠れキャラをランダムに', hiddenCharFrames: '隠れてよい枠',
 };
 
 // 「競技 2 › ルール」のような読める名前と、「events[1].rule」のようなファイル上の場所
@@ -464,7 +497,10 @@ function renderCheck() {
   addList('まだ［］のまま残っている項目', found.placeholders, (item) => item.value);
   addList('画像が未設定の場所', found.images);
   // 隠れる枠が無い(またはセクションが空で非表示の)隠れキャラ。ある時だけ出す
-  if (hiddenUnplaced.length > 0) {
+  if (hiddenShort) {
+    addList(`隠れる枠の候補(hiddenCharFrames)が足りず出せなかった隠れキャラ(候補 ${hiddenPlaced.length}個)`,
+      hiddenUnplaced.map((i) => ({ path: ['hiddenChars', i] })));
+  } else if (hiddenUnplaced.length > 0) {
     addList('隠れる枠が見つからない隠れキャラ',
       hiddenUnplaced.map((i) => ({ path: ['hiddenChars', i, 'frame'], value: CONTENT.hiddenChars[i].frame })),
       (item) => `'${item.value}'`);
