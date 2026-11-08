@@ -47,7 +47,10 @@
       <p class="cover__slogan" id="site-slogan"></p>
       <p class="cover__venue" id="site-venue"></p>
     </div>
-    <div class="ph cover__illust" id="cover-image">表紙イラスト<br>(イラスト班)</div>
+    <!-- .frame = イラストの枠。隠れキャラはこの中で、枠(.ph)の後ろに入る -->
+    <div class="frame cover__illust" id="frame-cover">
+      <div class="ph" id="cover-image">表紙イラスト<br>(イラスト班)</div>
+    </div>
   </div>
   <div class="track-stripe" aria-hidden="true"></div>
 </header>
@@ -73,7 +76,9 @@
       <span class="section__num"></span>
       <h2>施設案内</h2>
     </div>
-    <div class="ph ph--map" id="map-image">簡易マップ</div>
+    <div class="frame ph--map" id="frame-map">
+      <div class="ph" id="map-image">簡易マップ</div>
+    </div>
     <div class="places" id="places-list"></div>
   </section>
 
@@ -130,40 +135,23 @@
       <h2>おたのしみ</h2>
     </div>
     <div class="fun">
-      <!-- 隠れキャラの見つけた数(hiddenChars が空なら出ない) -->
-      <div class="hunt" id="hunt" hidden>
+      <!-- 隠れキャラ探し(hiddenChars が空なら出ない) -->
+      <div class="fun__item" id="hunt" hidden>
         <h3>隠れキャラ探し</h3>
-        <p class="hunt__count" id="hunt-count" aria-live="polite"></p>
-        <p class="note">ページのあちこちに小さいキャラが隠れてるよ。見つけたらタップしてみて</p>
+        <p id="hunt-text"></p>
+        <p class="hunt__progress">
+          <span class="visually-hidden">見つけた数</span>
+          <span class="hunt__dots" id="hunt-dots" aria-hidden="true"></span>
+          <span class="hunt__count" id="hunt-count" aria-live="polite"></span>
+        </p>
         <p class="hunt__done" id="hunt-done" hidden></p>
       </div>
-      <div class="cheer">
-        <h3>応援ボタン</h3>
-        <div class="cheer__main">
-          <div class="cheer__buddy">
-            <p class="bubble cheer__line" id="cheer-line" aria-live="polite"></p>
-            <div class="cheer__char" id="cheer-char" aria-hidden="true">キャラ</div>
-          </div>
-          <div class="cheer__controls">
-            <span class="cheer__count" id="cheer-count" aria-live="polite">000</span>
-            <button type="button" class="cheer__btn" id="cheer-btn">がんばれ！</button>
-          </div>
-        </div>
-        <p class="note">押すたびにカウントが増えるよ(保存はされない)</p>
-      </div>
-      <div class="spot">
+      <!-- 間違い探しの答え(説明も画像も空なら出ない) -->
+      <div class="fun__item" id="spot">
         <h3>間違い探し</h3>
-        <div class="spot__pair">
-          <div class="ph ph--spot" id="spot-a">イラストA</div>
-          <div class="ph ph--spot" id="spot-b">イラストB</div>
-        </div>
-        <p class="note" id="spot-text"></p>
-      </div>
-      <!-- 謎解きの答え合わせ(puzzles が空なら出ない) -->
-      <div class="puzzles" id="puzzles">
-        <h3>謎解きの答え合わせ</h3>
-        <p class="note">紙のしおりの謎がとけたら、ここで答え合わせしてね</p>
-        <div class="puzzles__list" id="puzzles-list"></div>
+        <p id="spot-text"></p>
+        <button type="button" class="btn-sub" id="spot-btn" aria-expanded="false" aria-controls="spot-answer">答えを見る</button>
+        <div class="ph ph--answer" id="spot-answer" hidden>答えの画像</div>
       </div>
     </div>
   </section>

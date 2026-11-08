@@ -117,6 +117,85 @@ p { margin: 0; }
   object-fit: cover;
 }
 
+/* ---------- イラストの枠と隠れキャラ ----------
+   .frame(大きさを決める入れ物)の中に .ph(枠)。隠れキャラは .frame の中で枠より後ろにいて、
+   枠からはみ出た所(顔の上半分くらい)だけ見える。枠に画像が入っても同じ */
+.frame { position: relative; isolation: isolate; }
+.frame > .ph { position: relative; z-index: 1; height: 100%; }
+
+/* キャラ本体。left / top は JS が --at(はし寄り18%・真ん中50%・はし寄り82%)で決める
+   左右から出す時は、頭が外を向くように90度まわす(左右の出ている幅はスマホの余白16pxにおさまる14px) */
+.peek {
+  position: absolute;
+  z-index: 0;
+  width: 44px; height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px dotted var(--c-muted);
+  background: var(--c-bg);
+  font-family: var(--f-num);
+  font-size: 14px;
+  color: var(--c-muted);
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.peek:has(img) { border: none; background: none; }
+.peek img { width: 100%; height: 100%; object-fit: contain; }
+.peek.is-found { border-style: solid; border-color: var(--c-accent); color: var(--c-accent); }
+.peek--top { top: -20px; left: var(--at); transform: translateX(-50%); }
+.peek--left { left: -14px; top: var(--at); transform: translateY(-50%) rotate(-90deg); }
+.peek--right { right: -14px; top: var(--at); transform: translateY(-50%) rotate(90deg); }
+/* タップ中:枠の前に出て、全身が見える */
+.peek.is-out { z-index: 3; }
+.peek--top.is-out { transform: translateX(-50%) translateY(-26px); }
+.peek--left.is-out { transform: translateY(-50%) translateX(18px) rotate(0deg); }
+.peek--right.is-out { transform: translateY(-50%) translateX(-18px) rotate(0deg); }
+@media (prefers-reduced-motion: reduce) {
+  .peek { transition: none; }
+}
+
+/* タップする所(見た目より広い44px。枠の前にある透明なボタン) */
+.peek__hit {
+  position: absolute;
+  z-index: 2;
+  width: var(--tap); height: var(--tap);
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.peek__hit:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.peek__hit--top { top: -22px; left: var(--at); transform: translateX(-50%); }
+.peek__hit--left { left: -14px; top: var(--at); transform: translateY(-50%); }
+.peek__hit--right { right: -14px; top: var(--at); transform: translateY(-50%); }
+
+/* セリフ(小さく、線の細い吹き出し) */
+.peek__bubble {
+  position: absolute;
+  z-index: 4;
+  width: max-content;
+  max-width: min(200px, calc(100vw - 2 * var(--gutter)));
+  padding: 2px 10px;
+  border: 1px solid var(--c-ink);
+  border-radius: 10px;
+  background: var(--c-bg);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.peek__bubble--top { top: -52px; transform: translateY(-100%); }
+.peek__bubble--top.peek__bubble--start { left: calc(var(--at) - 22px); }
+.peek__bubble--top.peek__bubble--center { left: var(--at); transform: translate(-50%, -100%); }
+.peek__bubble--top.peek__bubble--end { right: calc(100% - var(--at) - 22px); }
+.peek__bubble--left,
+.peek__bubble--right { top: calc(var(--at) - 30px); transform: translateY(-100%); }
+.peek__bubble--left { left: 0; }
+.peek__bubble--right { right: 0; }
+
 /* ---------- 細かいストライプ(表紙の下とフッター) ---------- */
 .track-stripe {
   height: 6px;
@@ -277,7 +356,6 @@ p { margin: 0; }
 
 /* ---------- セクション共通 ---------- */
 .section {
-  position: relative; /* 隠れキャラ(下の右はし)の基準 */
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -461,308 +539,65 @@ p { margin: 0; }
   border-bottom: var(--line-item);
 }
 
-/* ---------- 05 おたのしみ ---------- */
+/* ---------- 05 おたのしみ ----------
+   隠れキャラ探し・間違い探しを同じ形(小見出し → 中身)にそろえる。間はグレーの線1本だけ */
 .fun {
   display: flex;
-  flex-wrap: wrap;
-  gap: 40px;
+  flex-direction: column;
+  gap: 24px;
 }
 .fun h3 { font-size: 18px; font-weight: 700; }
-
-/* 吹き出し(応援キャラ・隠れキャラ共通) */
-.bubble {
-  position: relative;
-  padding: 6px 12px;
-  border: 1px solid var(--c-ink);
-  border-radius: 12px;
-  background: var(--c-bg);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.bubble::after { /* しっぽ */
-  content: '';
-  position: absolute;
-  width: 8px; height: 8px;
-  background: var(--c-bg);
-  border: solid var(--c-ink);
-  border-width: 0 1px 1px 0;
-}
-
-/* 隠れキャラの見つけた数 */
-.hunt {
-  flex: 1 1 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.hunt__count { font-weight: 700; }
-.hunt.is-done .hunt__count { color: var(--c-accent); }
-.hunt__done {
-  margin-top: 4px;
-  padding: 12px 14px;
-  background: var(--c-now-bg);
-  font-weight: 700;
-}
-
-.cheer {
-  flex: 1 1 280px;
-  min-width: 0;
+.fun__item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 14px;
-}
-/* ボタンの横にキャラ(スマホでは上) */
-.cheer__main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px 24px;
-}
-.cheer__controls {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-}
-.cheer__buddy {
-  order: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-.cheer__line { max-width: 180px; }
-.cheer__line::after { /* 下向きのしっぽ */
-  left: 50%;
-  bottom: -5px;
-  transform: translateX(-50%) rotate(45deg);
-}
-.cheer__char {
-  width: 72px; height: 72px;
-  flex: none;
-  border-radius: 50%;
-  border: 1px dashed var(--c-ink);
-  background: var(--c-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-size: 12px;
-  font-weight: 700;
-}
-.cheer__char img { width: 100%; height: 100%; object-fit: contain; }
-.cheer__char.is-jump { animation: cheer-jump 0.45s ease-out; }
-@keyframes cheer-jump {
-  0%   { transform: translateY(0); }
-  35%  { transform: translateY(-18px); }
-  65%  { transform: translateY(0); }
-  80%  { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cheer__char.is-jump { animation: cheer-nudge 0.2s ease-out; }
-}
-@keyframes cheer-nudge {
-  50% { transform: translateY(-3px); }
-}
-.cheer__count {
-  font-family: var(--f-num);
-  font-weight: 700;
-  font-size: 72px;
-  line-height: 1;
-  color: var(--c-accent);
-}
-.cheer__btn {
-  min-height: 52px;
-  padding: 14px 32px;
-  border: none;
-  background: var(--c-ink);
-  color: var(--c-bg);
-  font-family: var(--f-head);
-  font-weight: 900;
-  font-size: 20px;
-  cursor: pointer;
-  touch-action: manipulation; /* 連打でズームしないように */
-}
-.cheer__btn:active { background: var(--c-accent); }
-
-.spot {
-  flex: 2 1 360px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.spot__pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.ph--spot { height: 180px; }
-
-/* 謎解きの答え合わせ */
-.puzzles {
-  flex: 1 1 100%;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
 }
-.puzzle {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 18px 0;
-  border-bottom: var(--line-item);
+.fun__item:not([hidden]) ~ .fun__item:not([hidden]) {
+  padding-top: 24px;
+  border-top: var(--line-item);
 }
-.puzzle__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-}
-.puzzle__no {
-  font-family: var(--f-num);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--c-accent);
-}
-.puzzle__title { font-size: 17px; }
-.puzzle__badge {
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--c-accent);
-  color: var(--c-bg);
-  padding: 1px 8px;
-}
-.puzzle:not(.is-solved) .puzzle__badge { display: none; }
 
-.puzzle__form {
+/* 隠れキャラ探し:●●○ 2 / 3 */
+.hunt__progress {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
-.puzzle__input {
-  flex: 1 1 180px;
-  min-width: 0;
-  min-height: var(--tap);
-  padding: 0 12px;
+.hunt__dots { display: flex; gap: 6px; }
+.hunt__dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
   border: 1px solid var(--c-ink);
-  border-radius: 0;
+}
+.hunt__dots .is-on { background: var(--c-accent); border-color: var(--c-accent); }
+.hunt__count {
+  font-family: var(--f-num);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+}
+.hunt__done { font-weight: 700; color: var(--c-accent); }
+
+/* 間違い探しの答え */
+.btn-sub {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--c-ink);
   background: var(--c-bg);
   color: var(--c-ink);
-  font-family: var(--f-body);
-  font-size: 16px; /* 16px未満だと iPhone で入力時にズームする */
-}
-.puzzle__input:focus { outline: 2px solid var(--c-accent); outline-offset: -1px; }
-.puzzle__submit {
-  min-height: var(--tap);
-  padding: 0 20px;
-  border: none;
-  background: var(--c-ink);
-  color: var(--c-bg);
   font-family: var(--f-body);
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
 }
-.puzzle__submit:active { background: var(--c-accent); }
-
-.puzzle__result:empty { display: none; }
-.puzzle__result,
-.puzzle__answer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.puzzle__ok { font-weight: 700; color: var(--c-accent); }
-.puzzle__ng { font-weight: 700; }
-.puzzle__explain { font-size: 14px; color: var(--c-muted); }
-.puzzle__answer { padding: 12px 14px; background: var(--c-paper); }
-.puzzle__answer > p:first-child { font-weight: 700; }
-.puzzle__hint { font-size: 14px; }
-.puzzle__confirm {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px dashed var(--c-ink);
-  font-size: 14px;
-}
-
-.puzzle__tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.btn-sub {
-  min-height: var(--tap);
-  padding: 0 16px;
-  border: 1px solid var(--c-ink);
-  background: var(--c-bg);
-  color: var(--c-ink);
-  font-family: var(--f-body);
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-}
 .btn-sub:hover { color: var(--c-accent); border-color: var(--c-accent); }
-.btn-sub--ink { background: var(--c-ink); color: var(--c-bg); }
-.btn-sub--ink:hover { background: var(--c-accent); color: var(--c-bg); }
-
-/* ---------- 隠れキャラ ----------
-   見た目は40pxの丸、タップできる範囲は44px */
-.hide { position: relative; display: block; }
-.hide--head { margin-left: auto; align-self: center; }
-.hide--bottom { position: absolute; right: 0; bottom: 2px; }
-.hide__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--tap); height: var(--tap);
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+.ph--answer {
+  align-self: stretch;
+  height: 240px;
 }
-.hide__face {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: 1px dotted var(--c-muted);
-  overflow: hidden;
-  font-family: var(--f-num);
-  font-size: 14px;
-  color: var(--c-muted);
-  opacity: 0.6;
-  transition: opacity 0.2s, background-color 0.2s;
-}
-.hide__face:has(img) { border: none; opacity: 0.85; }
-.hide__face img { width: 100%; height: 100%; object-fit: contain; }
-.hide__btn:hover .hide__face { opacity: 1; }
-.hide.is-found .hide__face {
-  opacity: 1;
-  border: 1px solid var(--c-accent);
-  background: var(--c-now-bg);
-  color: var(--c-accent);
-}
-.hide__bubble {
-  position: absolute;
-  right: 0;
-  z-index: 5;
-  width: max-content;
-  max-width: min(240px, calc(100vw - 2 * var(--gutter)));
-}
-.hide__bubble::after { right: 18px; }
-/* 見出しの横 → 下に出す / セクションの下 → 上に出す */
-.hide--head .hide__bubble { top: calc(100% + 6px); }
-.hide--head .hide__bubble::after { top: -5px; transform: rotate(-135deg); }
-.hide--bottom .hide__bubble { bottom: calc(100% + 6px); }
-.hide--bottom .hide__bubble::after { bottom: -5px; transform: rotate(45deg); }
+.ph--answer:has(img) { height: auto; }
+.ph--answer img { height: auto; }
 
 /* 全部見つけた時の紙吹雪 */
 .confetti {
@@ -840,15 +675,4 @@ p { margin: 0; }
   .ph--map { height: 240px; }
   .program__row { gap: 14px; padding: 14px 8px; }
   .program__time { min-width: 56px; font-size: 20px; }
-  .ph--spot { height: 140px; }
-  /* 応援キャラはボタンの上に。吹き出しはキャラの右 */
-  .cheer__main { flex-direction: column; align-items: flex-start; }
-  .cheer__buddy { order: 0; flex-direction: row; }
-  .cheer__line { order: 1; }
-  .cheer__line::after {
-    left: -5px;
-    bottom: auto;
-    top: 50%;
-    transform: translateY(-50%) rotate(135deg);
-  }
 }
