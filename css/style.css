@@ -157,21 +157,23 @@ p { margin: 0; }
   .peek { transition: none; }
 }
 
-/* タップする所(見た目より広い44px。枠の前にある透明なボタン) */
+/* タップする所(枠の前にある透明なボタン)。見えている所＋枠の内側30pxほどまで広げる
+   左右は画面の端(OSの戻るジェスチャーがかかる所)だけに乗らないよう、枠の内側へのばす */
 .peek__hit {
   position: absolute;
   z-index: 2;
-  width: var(--tap); height: var(--tap);
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 8px;
   background: none;
   cursor: pointer;
 }
 .peek__hit:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
-.peek__hit--top { top: -22px; left: var(--at); transform: translateX(-50%); }
-.peek__hit--left { left: -14px; top: var(--at); transform: translateY(-50%); }
-.peek__hit--right { right: -14px; top: var(--at); transform: translateY(-50%); }
+.peek__hit--top { width: 56px; height: 52px; top: -22px; left: var(--at); transform: translateX(-50%); }
+.peek__hit--left,
+.peek__hit--right { width: 44px; height: 56px; top: var(--at); transform: translateY(-50%); }
+.peek__hit--left { left: -14px; }
+.peek__hit--right { right: -14px; }
 
 /* セリフ(小さく、線の細い吹き出し) */
 .peek__bubble {

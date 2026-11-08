@@ -209,7 +209,7 @@ function renderHiddenChars() {
     peek.setAttribute('aria-hidden', 'true');
     renderImage(peek, c.image);
 
-    // タップする所(枠の前。44px)
+    // タップする所(枠の前。見えている所＋枠の内側まで広げた透明なボタン)
     const btn = el('button', `peek__hit peek__hit--${side}`);
     btn.type = 'button';
     btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);

@@ -108,14 +108,14 @@ const CONTENT = {
   // イラストの枠の後ろにキャラが隠れて、ふちから顔だけ出している。タップすると出てきてセリフを言う
   // 空 [] にすると、隠れキャラも「おたのしみ」の隠れキャラ探しの欄も出なくなる
   // frame = 隠れる枠。'cover' 表紙イラスト / 'map' 簡易マップ / 'event-1' 1つめの競技の挿絵('event-2' は2つめ…)
-  // side  = 顔を出す向き。'top'(枠の上) / 'left'(枠の左) / 'right'(枠の右)
+  // side  = 顔を出す向き。'top'(枠の上) / 'left'(枠の左) / 'right'(枠の右)。左右は見える所が細いので、目立たせたい時は 'top'
   // pos   = ふちのどのあたりか。'start'(上か左のはし寄り) / 'center'(真ん中) / 'end'(下か右のはし寄り)
   // image = キャラの画像(正方形、背景が透明のPNGがおすすめ。空なら点線の丸)
   // line  = タップした時の吹き出しのセリフ(短めに)
   // 見つけた状態はその人のブラウザに保存される(順番を入れ替えると、保存した状態もずれる)
   hiddenChars: [
     { frame: 'cover', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ1］' },
-    { frame: 'map', side: 'left', pos: 'center', image: { src: '', alt: '' }, line: '［セリフ2］' },
+    { frame: 'map', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ2］' },
     { frame: 'event-2', side: 'top', pos: 'start', image: { src: '', alt: '' }, line: '［セリフ3］' },
   ],
   // 「隠れキャラ探し」の見出しの下の1行の説明。空にすると消える
