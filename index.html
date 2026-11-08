@@ -6,6 +6,22 @@
 <!-- タイトルと説明は js/content.js の名前・日付から自動で入る -->
 <title>体育祭しおり</title>
 <meta name="description" content="体育祭のしおり。施設案内・タイムテーブル・競技説明など。">
+<!-- LINEやSNSで共有した時のプレビュー(OGP)。JSは動かないので、ここに直接書く
+     体育祭の名前が決まったら og:title も書き換える(README の「共有時のプレビュー」) -->
+<meta property="og:title" content="SPORTS DAY 2026 しおり">
+<meta property="og:description" content="11月27日(金) 体育祭のしおり。タイムテーブル・競技説明・施設案内など">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kuro-83.github.io/sports-festival-2026/">
+<meta property="og:image" content="https://kuro-83.github.io/sports-festival-2026/img/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<!-- ブラウザのタブ・ホーム画面のアイコン -->
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@800;900&family=Oswald:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
@@ -49,7 +65,7 @@
     </div>
     <!-- .frame = イラストの枠。隠れキャラはこの中で、枠(.ph)の後ろに入る -->
     <div class="frame cover__illust" id="frame-cover">
-      <div class="ph" id="cover-image">表紙イラスト<br>(イラスト班)</div>
+      <div class="ph" id="cover-image">表紙イラスト</div>
     </div>
   </div>
   <div class="track-stripe" aria-hidden="true"></div>

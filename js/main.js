@@ -506,6 +506,18 @@ function renderCheck() {
       (item) => `'${item.value}'`);
   }
 
+  // OGP(index.html に直接書いてある)のタイトルに、決まった体育祭の名前が入っているか
+  const name = CONTENT.site.name;
+  const ogTitle = document.querySelector('meta[property="og:title"]')?.content || '';
+  if (name && !/［[^］]*］/.test(name) && !ogTitle.includes(name)) {
+    inner.append(el('p', 'check__heading', 'OGPのタイトルに体育祭の名前が入っていない'));
+    const ul = el('ul', 'check__list');
+    const li = el('li', '', 'content.js の名前が決まったら、index.html の og:title も直す');
+    li.append(el('span', 'check__value', `今: ${ogTitle}`));
+    ul.append(li);
+    inner.append(ul);
+  }
+
   box.replaceChildren(inner);
   box.className = 'check';
   box.hidden = false;
