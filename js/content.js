@@ -62,25 +62,22 @@ const CONTENT = {
   /* ---------- 03 競技説明＆みどころ ---------- */
   // 空 [] にすると、競技説明のセクションごと消える
   // name = 競技名、rule = ルール、highlight = みどころ(rule・highlight は空ならその行が消える)
-  // 「EVENT 01」の番号は上から自動でつく
+  // 「EVENT 01」の番号は上から自動でつく。挿絵はなし(文字だけ)
   events: [
     {
       name: '［競技名］',
       rule: '［かんたんなルール］',
       highlight: '［ここに注目！］',
-      image: { src: '', alt: '' },
     },
     {
       name: '［競技名］',
       rule: '［かんたんなルール］',
       highlight: '［ここに注目！］',
-      image: { src: '', alt: '' },
     },
     {
       name: '［競技名］',
       rule: '［かんたんなルール］',
       highlight: '［ここに注目！］',
-      image: { src: '', alt: '' },
     },
   ],
 
@@ -105,29 +102,30 @@ const CONTENT = {
   },
 
   /* ---------- おたのしみ:隠れキャラ探し ---------- */
-  // イラストの枠の後ろにキャラが隠れて、ふちから顔だけ出している。タップすると出てきてセリフを言う
+  // イラストの枠や、セクションの大きい番号(01〜)の後ろにキャラが隠れて、ふちから顔だけ出している。タップすると出てきてセリフを言う
   // 空 [] にすると、隠れキャラも「おたのしみ」の隠れキャラ探しの欄も出なくなる
   // 場所の決め方は2通り(下の hiddenCharsRandom で切り替え)
-  //   ランダム(true) … 開くたびに hiddenCharFrames の枠からランダムに選ぶ(1つの枠に1体、上から顔を出す)。frame / side / pos は使わない
+  //   ランダム(true) … 開くたびに hiddenCharFrames の枠からランダムに選ぶ(1つの枠・番号に1体、上から顔を出す)。frame / side / pos は使わない
   //   固定(false)    … 各キャラの frame / side / pos の場所に隠れる
-  // frame = 隠れる枠。'cover' 表紙イラスト / 'map' 簡易マップ / 'event-1' 1つめの競技の挿絵('event-2' は2つめ…)
+  // frame = 隠れる枠。'cover' 表紙イラスト / 'map' 簡易マップ / 'num-1' セクション番号の01('num-2' は02…。目次の番号ではなく、見出しの大きい番号)
   // side  = 顔を出す向き。'top'(枠の上) / 'left'(枠の左) / 'right'(枠の右)。左右は見える所が細いので、目立たせたい時は 'top'
   // pos   = ふちのどのあたりか。'start'(上か左のはし寄り) / 'center'(真ん中) / 'end'(下か右のはし寄り)
+  //         番号('num-…')は小さいので、side・pos は使わず、いつも番号の上の真ん中から顔を出す
   // image = キャラの画像(正方形、背景が透明のPNGがおすすめ。空なら点線の丸)
   // line  = タップした時の吹き出しのセリフ(短めに)
   // 見つけた状態はその人のブラウザに保存される(順番を入れ替えると、保存した状態もずれる)
   hiddenChars: [
     { frame: 'cover', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ1］' },
     { frame: 'map', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ2］' },
-    { frame: 'event-2', side: 'top', pos: 'start', image: { src: '', alt: '' }, line: '［セリフ3］' },
+    { frame: 'num-3', side: 'top', pos: 'center', image: { src: '', alt: '' }, line: '［セリフ3］' },
   ],
   // true = 開くたびにランダムな場所に隠れる / false = 上の frame / side / pos の固定の場所
   hiddenCharsRandom: true,
-  // ランダムの時に隠れてよい枠の候補。'events' は競技の挿絵ぜんぶ(競技の数に合わせて増える)
+  // ランダムの時に隠れてよい枠の候補。'nums' はセクション番号ぜんぶ(表示されているセクションだけ。'num-2' のように1つずつも書ける)
   // 枠の数がキャラより少ない時は、出せる数だけ出る(?check に出る)
-  hiddenCharFrames: ['cover', 'map', 'events'],
+  hiddenCharFrames: ['cover', 'map', 'nums'],
   // 「隠れキャラ探し」の見出しの下の1行の説明。空にすると消える
-  hiddenCharsText: 'イラストのうしろに、キャラが隠れてるよ',
+  hiddenCharsText: 'イラストや番号のうしろに、キャラが隠れてるよ',
   // 全部見つけた時に出る、緑の文字1行のメッセージ(紙吹雪も出る)
   hiddenCharsDone: '［全部見つけた時のメッセージ］',
 

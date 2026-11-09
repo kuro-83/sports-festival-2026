@@ -379,6 +379,19 @@ p { margin: 0; }
   line-height: 1;
   color: var(--c-accent);
 }
+/* 大きい番号も隠れキャラの枠(.frame--num)。数字の後ろを白でぬって、キャラが数字のすき間から透けないようにする
+   (左右に6pxずつ広げてキャラの横幅44pxを隠す。margin で打ち消すので、見出しの並びは変わらない)
+   白は数字の上のふち(文字の箱の上から0.14em下)から。そこから上に頭の上半分ほどが見える
+   タップする所・吹き出しは、ほかの枠の上(.peek__hit--top)と同じ */
+.section__digits {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 -6px;
+  background: linear-gradient(transparent 0.14em, var(--c-bg) 0);
+}
+.frame--num .peek--top { top: -16px; }
 .section__head h2 {
   font-family: var(--f-head);
   font-weight: 900;
@@ -501,24 +514,13 @@ p { margin: 0; }
 }
 .event {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  padding: 24px 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 0;
   border-bottom: var(--line-item);
 }
 .event:first-child { padding-top: 0; }
-.event__illust {
-  flex: 1 1 220px;
-  min-width: 0;
-  height: 160px;
-}
-.event__body {
-  flex: 999 1 320px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.event p { max-width: 40em; } /* PCで1行が長くなりすぎないように */
 .event__no {
   font-family: var(--f-num);
   font-weight: 500;
@@ -527,6 +529,7 @@ p { margin: 0; }
   color: var(--c-accent);
 }
 .event h3 {
+  margin-bottom: 2px;
   font-family: var(--f-head);
   font-weight: 800;
   font-size: 22px;

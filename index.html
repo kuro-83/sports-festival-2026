@@ -73,7 +73,8 @@
 
 <main class="wrap">
 
-  <!-- 番号(01〜)は、表示されているセクションだけで自動で振られる -->
+  <!-- 番号(01〜)は、表示されているセクションだけで自動で振られる
+       見出しの大きい番号(.section__num)も隠れキャラの枠。キャラは数字(.section__digits)の後ろに入る -->
   <nav id="toc" class="toc" aria-label="目次">
     <p class="eyebrow">CONTENTS</p>
     <div class="toc__list">
@@ -89,7 +90,7 @@
   <!-- 施設案内 -->
   <section id="map" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>施設案内</h2>
     </div>
     <div class="frame ph--map" id="frame-map">
@@ -101,7 +102,7 @@
   <!-- タイムテーブル -->
   <section id="timetable" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>タイムテーブル</h2>
     </div>
 
@@ -129,7 +130,7 @@
   <!-- 競技説明＆みどころ -->
   <section id="events" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>競技説明＆みどころ</h2>
     </div>
     <div class="events" id="events-list"></div>
@@ -138,7 +139,7 @@
   <!-- ほかの企画 -->
   <section id="others" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>ほかの企画</h2>
     </div>
     <div class="others" id="others-list"></div>
@@ -147,7 +148,7 @@
   <!-- おたのしみ -->
   <section id="fun" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>おたのしみ</h2>
     </div>
     <div class="fun">
@@ -175,7 +176,7 @@
   <!-- 注意事項 -->
   <section id="notice" class="section">
     <div class="section__head">
-      <span class="section__num"></span>
+      <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>注意事項</h2>
     </div>
     <div class="notices" id="notices-list"></div>

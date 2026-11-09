@@ -117,29 +117,19 @@ function renderEvents() {
   $('events').hidden = events.length === 0;
 
   $('events-list').replaceChildren(...events.map((ev, i) => {
+    // 挿絵はなし。EVENT 01・競技名・ルール・みどころの文字だけ
     const article = el('article', 'event');
-
-    // 枠(.ph)を .frame で包む。隠れキャラは 'event-1' のような名前でこの枠の後ろに入る
-    const illust = el('div', 'frame event__illust');
-    illust.id = `frame-event-${i + 1}`;
-    const box = el('div', 'ph', '挿絵');
-    renderImage(box, ev.image);
-    illust.append(box);
-
-    const body = el('div', 'event__body');
-    body.append(el('span', 'event__no', `EVENT ${pad(i + 1)}`), el('h3', '', ev.name));
+    article.append(el('span', 'event__no', `EVENT ${pad(i + 1)}`), el('h3', '', ev.name));
     if (ev.rule) {
       const p = el('p', '', `　${ev.rule}`);
       p.prepend(el('strong', '', 'ルール'));
-      body.append(p);
+      article.append(p);
     }
     if (ev.highlight) {
       const p = el('p', '', `　${ev.highlight}`);
       p.prepend(el('strong', 'accent', 'みどころ'));
-      body.append(p);
+      article.append(p);
     }
-
-    article.append(illust, body);
     return article;
   }));
 }
@@ -178,6 +168,7 @@ spotBtn.addEventListener('click', () => {
 
 /* ---------- おたのしみ:隠れキャラ探し ----------
    イラストの枠(.frame)の中で、枠(.ph)の後ろに隠れて、ふちから顔だけ出す
+   セクションの大きい番号('num-1'…)も枠。数字(.section__digits)の後ろに隠れて、上から顔を出す
    タップすると前に出てきてセリフを言い、数秒で元に戻る */
 const HIDDEN_KEY = 'hidden-chars-v6'; // v5(見出しの横に置く形)の保存データは使わない
 const PEEK_SIDES = ['top', 'left', 'right'];
@@ -199,10 +190,10 @@ function visibleFrame(name) {
   return frame && !frame.closest('[hidden]') ? frame : null;
 }
 
-// ランダムの時に隠れてよい枠。'events' は競技の挿絵ぜんぶ
+// ランダムの時に隠れてよい枠。'nums' はセクション番号ぜんぶ(renderNumbers が表示中の番号にだけ id を付ける)
 function randomFrameCandidates() {
-  const names = (CONTENT.hiddenCharFrames || []).flatMap((name) => (name === 'events'
-    ? CONTENT.events.map((_, n) => `event-${n + 1}`)
+  const names = (CONTENT.hiddenCharFrames || []).flatMap((name) => (name === 'nums'
+    ? [...document.querySelectorAll('[id^="frame-num-"]')].map((f) => f.id.slice('frame-'.length))
     : [name]));
   return [...new Set(names)].map(visibleFrame).filter(Boolean);
 }
@@ -230,10 +221,13 @@ function renderHiddenChars() {
       hiddenShort = random;
       return;
     }
-    const side = random ? 'top' : (PEEK_SIDES.includes(c.side) ? c.side : 'top');
-    const pos = random
-      ? posNames[Math.floor(Math.random() * posNames.length)]
-      : (PEEK_AT[c.pos] ? c.pos : 'center');
+    // 番号は小さいので、いつも上の真ん中から。吹き出しは画面の左にはみ出ないよう番号の左にそろえる
+    const isNum = frame.classList.contains('frame--num');
+    const side = random || isNum ? 'top' : (PEEK_SIDES.includes(c.side) ? c.side : 'top');
+    const pos = isNum ? 'center'
+      : random ? posNames[Math.floor(Math.random() * posNames.length)]
+        : (PEEK_AT[c.pos] ? c.pos : 'center');
+    const bubblePos = isNum ? 'start' : pos;
     frame.dataset.hiddenChar = `${i + 1}:${pos}`; // 確認用(どの枠に何体目がいるか)
 
     // キャラ本体(枠の後ろ)
@@ -246,7 +240,7 @@ function renderHiddenChars() {
     btn.type = 'button';
     btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);
 
-    const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${pos}`);
+    const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${bubblePos}`);
     bubble.setAttribute('aria-live', 'polite');
     bubble.hidden = true;
 
@@ -324,12 +318,17 @@ function renderNumbers() {
     const section = document.querySelector(link.getAttribute('href'));
     section.classList.remove('section--last');
     link.hidden = section.hidden;
+    // 大きい番号は隠れキャラの枠。表示中のものだけ 'frame-num-3' のような id を付ける
+    const frame = section.querySelector('.section__num');
+    frame.removeAttribute('id');
     if (section.hidden) return;
 
     count += 1;
     const num = pad(count);
     setText(link.querySelector('.num'), num);
-    setText(section.querySelector('.section__num'), num);
+    // 数字は中の .section__digits に入れる(隠れキャラが入っていても消さない)。'num-3' = 03 の番号
+    setText(frame.querySelector('.section__digits'), num);
+    frame.id = `frame-num-${count}`;
     last = section;
 
     const item = el('a', '', link.lastChild.textContent);
@@ -532,8 +531,11 @@ renderNotices();
 renderImage($('runner'), CONTENT.timetable.runnerImage);
 $('timetable').hidden = CONTENT.timetable.program.length === 0;
 renderSpot();
+// 隠れキャラが番号に隠れられるよう、先に番号を振る(おたのしみは、隠れキャラがいれば出る前提)
+$('fun').hidden = CONTENT.hiddenChars.length === 0 && $('spot').hidden;
+renderNumbers();
 renderHiddenChars();
-// 隠れキャラ探しも間違い探しも出ないなら、おたのしみごと隠す
+// 隠れキャラ探しも間違い探しも出ないなら、おたのしみごと隠す(消えたら番号を振り直す)
 $('fun').hidden = $('hunt').hidden && $('spot').hidden;
 renderNumbers();
 renderCheck();
