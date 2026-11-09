@@ -185,6 +185,8 @@ p { margin: 0; }
   border: 1px solid var(--c-ink);
   border-radius: 10px;
   background: var(--c-bg);
+  font-family: var(--f-body); /* 番号の中に入っても、番号の緑・数字のフォントにならないように */
+  color: var(--c-ink);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.6;
