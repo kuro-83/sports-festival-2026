@@ -111,24 +111,56 @@ function renderPlaces() {
   }));
 }
 
-/* ---------- 競技説明 ---------- */
+/* ---------- 競技説明 ----------
+   紙のしおりと同じ形:ラベル(ガチ/ゆる) → 競技名 → ひとこと → ルール → 見どころ → Q&A
+   説明が全部空の競技は、競技名とラベルの下に eventsEmptyText を出す */
+const EVENT_CATEGORIES = { gachi: 'ガチ競技', yuru: 'ゆる競技' };
+
+const isEmptyEvent = (ev) => !ev.summary && !(ev.rules || []).length && !ev.highlight && !(ev.qa || []).length;
+
+// 小見出し(ルール・見どころ)と中身のまとまり
+function eventBlock(label, labelClass, ...content) {
+  const block = el('div', 'event__block');
+  block.append(el('p', `event__label ${labelClass}`.trim(), label), ...content);
+  return block;
+}
+
 function renderEvents() {
   const events = CONTENT.events;
   $('events').hidden = events.length === 0;
 
-  $('events-list').replaceChildren(...events.map((ev, i) => {
-    // 挿絵はなし。EVENT 01・競技名・ルール・みどころの文字だけ
+  $('events-list').replaceChildren(...events.map((ev) => {
     const article = el('article', 'event');
-    article.append(el('span', 'event__no', `EVENT ${pad(i + 1)}`), el('h3', '', ev.name));
-    if (ev.rule) {
-      const p = el('p', '', `　${ev.rule}`);
-      p.prepend(el('strong', '', 'ルール'));
-      article.append(p);
+    if (EVENT_CATEGORIES[ev.category]) {
+      article.append(el('span', `event__tag event__tag--${ev.category}`, EVENT_CATEGORIES[ev.category]));
     }
-    if (ev.highlight) {
-      const p = el('p', '', `　${ev.highlight}`);
-      p.prepend(el('strong', 'accent', 'みどころ'));
-      article.append(p);
+    article.append(el('h3', '', ev.name));
+
+    if (isEmptyEvent(ev)) {
+      if (CONTENT.eventsEmptyText) article.append(el('p', 'event__empty', CONTENT.eventsEmptyText));
+      return article;
+    }
+    if (ev.summary) article.append(el('p', 'event__summary', ev.summary));
+
+    const rules = ev.rules || [];
+    if (rules.length > 0) {
+      const list = el(ev.rulesNumbered ? 'ol' : 'ul', 'event__rules');
+      list.append(...rules.map((rule) => el('li', '', rule)));
+      article.append(eventBlock('ルール', '', list));
+    }
+    if (ev.highlight) article.append(eventBlock('見どころ', 'accent', el('p', '', ev.highlight)));
+
+    // Q&A。「Q.」「A.」の後ろの文の行頭をそろえる(2列のグリッド)
+    const qa = ev.qa || [];
+    if (qa.length > 0) {
+      const box = el('div', 'event__qa');
+      box.append(...qa.map((item) => {
+        const row = el('div', 'qa');
+        row.append(el('span', 'qa__mark', 'Q.'), el('p', 'qa__q', item.q),
+          el('span', 'qa__mark qa__mark--a', 'A.'), el('p', 'qa__a', item.a));
+        return row;
+      }));
+      article.append(eventBlock('Q&A', '', box));
     }
     return article;
   }));
@@ -385,11 +417,23 @@ function getNow() {
   return { phase: 'day', minutes: now.getHours() * 60 + now.getMinutes() };
 }
 
+// プログラムの開始・終了(分)。end を書き忘れた行は、次の行の start まで
+function programSpans(program) {
+  return program.map((p, i) => {
+    const start = toMinutes(p.start);
+    const next = program[i + 1];
+    const end = p.end ? toMinutes(p.end) : (next ? toMinutes(next.start) : start);
+    return { start, end };
+  });
+}
+
 function renderTimetable() {
   const { program } = CONTENT.timetable;
+  const spans = programSpans(program);
   const now = getNow();
-  const start = toMinutes(CONTENT.timetable.start);
-  const end = toMinutes(CONTENT.timetable.end);
+  // キャラが走るのは、最初のプログラムの開始〜最後のプログラムの終了
+  const start = spans[0].start;
+  const end = spans[spans.length - 1].end;
 
   let nowIndex = -1;
   let label;
@@ -401,10 +445,16 @@ function renderTimetable() {
     label = 'おつかれさま！全プログラム終了';
     progress = 1;
   } else {
-    program.forEach((p, i) => {
-      if (now.minutes >= toMinutes(p.start)) nowIndex = i;
-    });
-    label = nowIndex >= 0 ? `いまは「${program[nowIndex].label}」` : 'まだ始まってないよ';
+    nowIndex = spans.findIndex((sp) => now.minutes >= sp.start && now.minutes < sp.end);
+    if (nowIndex >= 0) {
+      label = `いまは「${program[nowIndex].label}」`;
+    } else {
+      // どのプログラムにも入らない時間(始まる前・すき間)は、次のプログラムを出す
+      const next = program[spans.findIndex((sp) => sp.start > now.minutes)];
+      label = now.minutes < start
+        ? `まだ始まってないよ(${next.start}から「${next.label}」)`
+        : `次は「${next.label}」(${next.start}から)`;
+    }
     progress = Math.min(1, Math.max(0, (now.minutes - start) / (end - start)));
   }
 
@@ -419,9 +469,12 @@ function renderTimetable() {
       `※テスト表示中:${MD} ${Math.floor(now.minutes / 60)}:${pad(now.minutes % 60)} として表示しています`);
   }
 
+  // 時刻は「10:00〜10:30」。終わりの時刻は少し小さく
   $('program').replaceChildren(...program.map((p, i) => {
     const li = el('li', 'program__row' + (i === nowIndex ? ' is-now' : ''));
-    li.append(el('span', 'program__time', p.start), el('span', 'program__name', p.label));
+    const time = el('span', 'program__time', p.start);
+    if (p.end) time.append(el('span', 'program__end', `〜${p.end}`));
+    li.append(time, el('span', 'program__name', p.label));
     if (i === nowIndex) {
       li.setAttribute('aria-current', 'step');
       li.append(el('span', 'program__badge', 'NOW'));
@@ -436,7 +489,9 @@ const CHECK_LABELS = {
   coverImage: '表紙イラスト', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', label: '名前', runnerImage: '走るキャラ', events: '競技',
-  rule: 'ルール', highlight: 'みどころ', image: '画像', others: 'ほかの企画',
+  category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
+  highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
+  image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotText: '間違い探しの説明', spotAnswerImage: '間違い探しの答え',
   notices: '注意事項',
   hiddenChars: '隠れキャラ', frame: '隠れる枠', line: 'セリフ',
@@ -495,6 +550,10 @@ function renderCheck() {
   };
   addList('まだ［］のまま残っている項目', found.placeholders, (item) => item.value);
   addList('画像が未設定の場所', found.images);
+  // ひとこと・ルール・見どころ・Q&A が全部空の競技(サイトには「準備中」の文が出ている)
+  addList('説明が空の競技',
+    CONTENT.events.flatMap((ev, i) => (isEmptyEvent(ev) ? [{ path: ['events', i], value: ev.name }] : [])),
+    (item) => item.value);
   // 隠れる枠が無い(またはセクションが空で非表示の)隠れキャラ。ある時だけ出す
   if (hiddenShort) {
     addList(`隠れる枠の候補(hiddenCharFrames)が足りず出せなかった隠れキャラ(候補 ${hiddenPlaced.length}個)`,
