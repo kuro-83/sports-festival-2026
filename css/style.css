@@ -10,6 +10,7 @@
   --c-now-bg: #E3F4E9;     /* 「いまここ」の行の背景 */
   --c-muted: #555555;      /* 補足の文字 */
   --c-rule: #DDDDDA;       /* 薄いグレーの線 */
+  --c-hairline: #EEEEEB;   /* とても薄い線(競技説明のQ&Aの間) */
   --c-paper: #F1F1EE;      /* プレースホルダーの斜線 */
 
   /* 線(ルールは2つだけ) */
@@ -414,6 +415,17 @@ p { margin: 0; }
   border-bottom: var(--line-item);
 }
 .place span { font-size: 14px; color: var(--c-muted); }
+/* 一番下の行の線を白で消す(下のセクションの黒い線と二重にならないように。何列になっても効く) */
+.places,
+.toc__list { position: relative; }
+.places::after,
+.toc__list::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--c-bg);
+}
 
 /* ---------- 02 タイムテーブル ---------- */
 .now {
@@ -484,14 +496,27 @@ p { margin: 0; }
   margin: 0;
   padding: 0;
 }
-.program__row {
+.program__row { border-bottom: var(--line-item); }
+.program__row:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
+.program__row.is-now { background: var(--c-now-bg); }
+.program__inner {
   display: flex;
   align-items: center;
   gap: 24px;
   padding: 16px 12px;
-  border-bottom: var(--line-item);
 }
-.program__row.is-now { background: var(--c-now-bg); }
+/* 競技説明に飛べる行(行全体がリンク。右端に「→」) */
+a.program__inner { color: inherit; text-decoration: none; }
+@media (hover: hover) {
+  a.program__inner:hover .program__name { color: var(--c-accent); }
+}
+.program__go {
+  margin-left: auto;
+  font-family: var(--f-num);
+  font-size: 16px;
+  color: var(--c-muted);
+}
+.program__badge + .program__go { margin-left: 0; }
 .program__time {
   min-width: 112px;
   font-family: var(--f-num);
@@ -516,66 +541,158 @@ p { margin: 0; }
   padding: 2px 10px;
 }
 
-/* ---------- 03 競技説明 ---------- */
-.events {
-  display: flex;
-  flex-direction: column;
-}
+/* ---------- 03 競技説明 ----------
+   一覧(1行 = ボタン)を押すと、その競技の説明が開く。罫線＋Oswaldの数字の形
+   --ev-color / --ev-ink / --ev-marker は JS が担当キャンパスの色(content.js の campusColors)を入れる */
+.events { border-top: 1px solid var(--c-ink); }
 .event {
+  --ev-color: var(--c-accent);
+  --ev-ink: var(--c-accent);
+  --ev-marker: var(--c-now-bg);
+  border-bottom: var(--line-item);
+  scroll-margin-top: calc(var(--header-h) + 8px); /* タイムテーブルから飛んだ時、固定ヘッダーに隠れないように */
+}
+.event:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
+.event__head { margin: 0; font: inherit; }
+.event__btn {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.event__btn:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.event__time {
+  flex: 0 0 64px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 28px 0;
-  border-bottom: var(--line-item);
+  font-family: var(--f-num);
+  line-height: 1;
 }
-.event:first-child { padding-top: 0; }
-.event > * { max-width: 40em; } /* PCで1行が長くなりすぎないように */
-
-/* ガチ競技 = 黒地に白文字、ゆる競技 = 緑の枠線に緑文字 */
-.event__tag {
-  margin-bottom: -8px;
-  padding: 1px 10px;
-  border: 1px solid;
-  font-size: 12px;
+.event__start { font-weight: 700; font-size: 26px; color: var(--ev-ink); }
+.event__end { margin-top: 4px; font-weight: 500; font-size: 11px; color: var(--c-muted); }
+.event__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.event__cat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
+  line-height: 1.6;
+  color: var(--c-muted);
 }
-.event__tag--gachi { border-color: var(--c-ink); background: var(--c-ink); color: var(--c-bg); }
-.event__tag--yuru { border-color: var(--c-accent); color: var(--c-accent); }
-.event h3 {
+.event__square { flex: 0 0 auto; width: 8px; height: 8px; background: var(--ev-color); }
+.event__name {
   font-family: var(--f-head);
   font-weight: 800;
-  font-size: 22px;
+  font-size: 19px;
+  line-height: 1.35;
+  text-wrap: balance; /* 2行になる時、1文字だけ次の行に残らないように */
 }
-.event__summary { font-weight: 700; }
-.event__empty { margin-top: -6px; font-size: 13px; color: var(--c-muted); }
+@media (hover: hover) { /* スマホでタップした後に色が残らないように */
+  .event__btn:hover .event__name { color: var(--c-accent); }
+}
+/* 右端の「＋」(開いている時は「−」)。フォントで幅が変わらないよう線で描く */
+.event__sign {
+  flex: 0 0 24px;
+  position: relative;
+  height: 24px;
+}
+.event__sign::before,
+.event__sign::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 14px; height: 2px;
+  background: var(--c-ink);
+  transform: translate(-50%, -50%);
+}
+.event__sign::after { transform: translate(-50%, -50%) rotate(90deg); }
+.event__btn[aria-expanded="true"] .event__sign::after { display: none; }
 
-/* ルール・見どころ・Q&A = 小見出し + 中身 */
+/* 開いた中身。時刻の列(64px)＋間(14px)だけ左を空けて、競技名の左端にそろえる */
+.event__inner {
+  max-width: calc(40em + 78px); /* PCで1行が長くなりすぎないように */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 0 22px 78px;
+}
+.event__body:not([hidden]) .event__inner { animation: event-open 0.25s ease-out; }
+@keyframes event-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event__body:not([hidden]) .event__inner { animation: none; }
+}
+.event__summary { font-weight: 700; font-size: 15px; line-height: 1.6; }
+.event__empty { font-size: 14px; color: var(--c-muted); }
+
+/* RULE・HIGHLIGHT・Q&A = Oswaldの小さいグレーの見出し + 中身 */
 .event__block {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.event__label { font-size: 13px; font-weight: 700; }
-.event__rules { margin: 0; padding-left: 1.4em; }
-.event__rules li::marker { color: var(--c-accent); font-weight: 700; }
-ol.event__rules li::marker { font-family: var(--f-num); }
-
-/* Q&A:少し小さめ。「Q.」「A.」の列をそろえて、文の行頭をそろえる */
-.event__qa {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 14px;
+.event__label {
+  font-family: var(--f-num);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-muted);
 }
+.event__rules {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.event__rules--numbered { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.event__rules li { display: flex; align-items: baseline; gap: 8px; }
+.event__rule-mark {
+  flex: 0 0 auto;
+  font-family: var(--f-num);
+  font-weight: 700;
+  color: var(--ev-ink);
+}
+.event__highlight { font-weight: 700; font-size: 15px; line-height: 1.6; }
+.event__highlight span {
+  background: linear-gradient(transparent 62%, var(--ev-marker) 62%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Q&A:「Q」「A」の列をそろえて、文の行頭をそろえる。Q&Aどうしの間はとても薄い線 */
 .qa {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 2px 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--c-hairline);
+  font-size: 14px;
+  line-height: 1.6;
 }
 .qa__mark { font-family: var(--f-num); font-weight: 700; }
-.qa__mark--a { color: var(--c-accent); }
+.qa__mark--a { color: var(--ev-ink); }
 .qa__q { font-weight: 700; }
 
 /* ---------- 04 ほかの企画 ---------- */
@@ -586,6 +703,7 @@ ol.event__rules li::marker { font-family: var(--f-num); }
   padding: 14px 0;
   border-bottom: var(--line-item);
 }
+.other:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
 
 /* ---------- 05 おたのしみ ----------
    隠れキャラ探し・間違い探しを同じ形(小見出し → 中身)にそろえる。間はグレーの線1本だけ */
@@ -670,6 +788,7 @@ ol.event__rules li::marker { font-family: var(--f-num); }
   padding: 14px 0;
   border-bottom: var(--line-item);
 }
+.notices p:last-child { border-bottom: none; }
 
 /* ---------- フッター ---------- */
 .footer__inner {
@@ -721,7 +840,7 @@ ol.event__rules li::marker { font-family: var(--f-num); }
   .section__num { font-size: 36px; }
   .section__head h2 { font-size: 24px; }
   .ph--map { height: 240px; }
-  .program__row { gap: 14px; padding: 14px 8px; }
+  .program__inner { gap: 12px; padding: 14px 8px; }
   .program__time { min-width: 96px; font-size: 20px; }
   .program__end { font-size: 13px; }
 }

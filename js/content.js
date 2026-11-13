@@ -67,20 +67,25 @@ const CONTENT = {
     runnerImage: { src: '', alt: '' },
   },
 
-  /* ---------- 03 競技説明＆みどころ ---------- */
+  /* ---------- 03 競技説明＆見どころ ---------- */
   // 空 [] にすると、競技説明のセクションごと消える。上から順に出る(タイムテーブルの順に並べる)
-  // 1競技ごとの項目(name・category 以外は、空ならその欄が出ない)
+  // 最初は競技名の一覧だけ。タップすると、その競技の説明が開く
+  // 時刻は、タイムテーブルの同じ名前のプログラムから自動で入る(名前を1文字も違えずにそろえる。見つからない時は時刻なし)
+  // タイムテーブルのその行をタップすると、ここに飛んで開く
+  // 1競技ごとの項目(name・category・campus 以外は、空ならその欄が出ない)
   //   name          = 競技名
-  //   category      = 'gachi'(ガチ競技) か 'yuru'(ゆる競技)。競技名の上に小さいラベルで出る。'' ならラベルなし
+  //   category      = 'gachi'(ガチ競技) か 'yuru'(ゆる競技)。競技名の上に小さいグレーの文字で出る。'' なら出ない
+  //   campus        = 担当キャンパスの色。'green' / 'yellow' / 'pink'(下の campusColors)。時刻・番号・見どころの色になる
   //   summary       = ひとことで言うとどんな競技か(1〜2文)
   //   rules         = ルールの箇条書き。[ '1つめ', '2つめ' ] の形
   //   rulesNumbered = true にすると、ルールが 1. 2. 3. の番号つきになる(サイコロの目のような時)
   //   highlight     = 見どころ
   //   qa            = Q&A。[ { q: '質問', a: '答え' } ] の形。答えは \n で改行できる
-  // summary・rules・highlight・qa が全部空の競技は、競技名とラベルの下に eventsEmptyText が出る
+  // summary・rules・highlight・qa が全部空の競技は、開いた時に eventsEmptyText だけが出る
   events: [
     {
       name: 'サイコロ運試しリレー',
+      campus: 'green',
       category: 'yuru',
       summary: 'サイコロの目に応じた方法で走ろう！',
       rules: ['けんけん', 'ドリブル', '競歩', '駆け足飛び', 'スキップ', 'バトン二人持ち'],
@@ -93,6 +98,7 @@ const CONTENT = {
     },
     {
       name: 'アルティメット',
+      campus: 'green',
       category: 'gachi',
       summary: 'フリスビー（ディスク）をパスでつないで、相手のエンドゾーンまで運ぶ競技！',
       rules: [
@@ -106,13 +112,22 @@ const CONTENT = {
       highlight: 'ディフェンスが飛んでるディスクをどうやって奪うか',
       qa: [],
     },
-    { name: 'なんでも玉入れ', category: 'yuru', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
-    { name: '借り人競争', category: 'gachi', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
-    { name: 'ドッチビー', category: 'yuru', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
-    { name: 'CP対抗リレー', category: 'gachi', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
+    { name: 'なんでも玉入れ', campus: 'yellow', category: 'yuru', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
+    { name: '借り人競争', campus: 'yellow', category: 'gachi', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
+    { name: 'ドッチビー', campus: 'pink', category: 'yuru', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
+    { name: 'CP対抗リレー', campus: 'pink', category: 'gachi', summary: '', rules: [], rulesNumbered: false, highlight: '', qa: [] },
   ],
-  // 説明が全部空の競技に出る、グレーの小さい1行
-  eventsEmptyText: 'くわしい説明は準備中！',
+  // 説明が全部空の競技を開いた時に出る、グレーの1行
+  eventsEmptyText: 'くわしい説明は準備中！当日をお楽しみに',
+  // 担当キャンパスの色(キャンパスの名前はサイトには出ない)
+  //   color  = 競技名の上の小さい四角の色
+  //   ink    = 時刻・ルールの番号・Q&Aの「A」の色(白地で読める濃さにする)
+  //   marker = 見どころの文字の下半分に引く、薄いマーカーの色
+  campusColors: {
+    green: { color: '#0E8A43', ink: '#0E8A43', marker: '#BFE6CB' },
+    yellow: { color: '#E0A800', ink: '#A87A00', marker: '#FFE58A' },
+    pink: { color: '#E8559A', ink: '#C63A7C', marker: '#FBC6DD' },
+  },
 
   /* ---------- 04 ほかの企画 ---------- */
   // 空 [] にすると、セクションごと消えて、後ろの番号が繰り上がる

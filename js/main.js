@@ -112,58 +112,138 @@ function renderPlaces() {
 }
 
 /* ---------- 競技説明 ----------
-   紙のしおりと同じ形:ラベル(ガチ/ゆる) → 競技名 → ひとこと → ルール → 見どころ → Q&A
-   説明が全部空の競技は、競技名とラベルの下に eventsEmptyText を出す */
+   一覧(時刻・ガチ/ゆる・競技名)を押すと、その競技の説明が開く(アコーディオン。1つずつ開け閉めできる)
+   開いた中身:ひとこと → RULE → HIGHLIGHT → Q&A。説明が全部空の競技は eventsEmptyText だけ
+   色は担当キャンパスの色(campusColors)。時刻はタイムテーブルの同じ名前のプログラムから取る */
 const EVENT_CATEGORIES = { gachi: 'ガチ競技', yuru: 'ゆる競技' };
 
 const isEmptyEvent = (ev) => !ev.summary && !(ev.rules || []).length && !ev.highlight && !(ev.qa || []).length;
 
-// 小見出し(ルール・見どころ)と中身のまとまり
-function eventBlock(label, labelClass, ...content) {
+// 競技の場所の id。タイムテーブルからのリンクと URL の #event-競技名 に使う
+const eventId = (name) => `event-${name}`;
+const eventNames = new Set(CONTENT.events.map((ev) => ev.name));
+
+// 小見出し(RULE・HIGHLIGHT・Q&A)と中身のまとまり
+function eventBlock(label, ...content) {
   const block = el('div', 'event__block');
-  block.append(el('p', `event__label ${labelClass}`.trim(), label), ...content);
+  block.append(el('p', 'event__label', label), ...content);
   return block;
+}
+
+function eventDetail(ev) {
+  const inner = el('div', 'event__inner');
+  if (isEmptyEvent(ev)) {
+    if (CONTENT.eventsEmptyText) inner.append(el('p', 'event__empty', CONTENT.eventsEmptyText));
+    return inner;
+  }
+  if (ev.summary) inner.append(el('p', 'event__summary', ev.summary));
+
+  // ルール。番号つきは2列で「1 けんけん」、ふつうは1列で「— 〇〇」
+  const rules = ev.rules || [];
+  if (rules.length > 0) {
+    const list = el(ev.rulesNumbered ? 'ol' : 'ul', `event__rules${ev.rulesNumbered ? ' event__rules--numbered' : ''}`);
+    list.setAttribute('role', 'list');
+    list.append(...rules.map((rule, n) => {
+      const li = el('li');
+      const mark = el('span', 'event__rule-mark', ev.rulesNumbered ? String(n + 1) : '—');
+      mark.setAttribute('aria-hidden', 'true');
+      li.append(mark, el('span', '', rule));
+      return li;
+    }));
+    inner.append(eventBlock('RULE', list));
+  }
+
+  // 見どころ。文字の下半分にキャンパスの色の薄いマーカー
+  if (ev.highlight) {
+    const p = el('p', 'event__highlight');
+    p.append(el('span', '', ev.highlight));
+    inner.append(eventBlock('HIGHLIGHT', p));
+  }
+
+  // Q&A。「Q」「A」の後ろの文の行頭をそろえる(2列のグリッド)
+  const qa = ev.qa || [];
+  if (qa.length > 0) {
+    inner.append(eventBlock('Q&A', ...qa.map((item) => {
+      const row = el('div', 'qa');
+      row.append(el('span', 'qa__mark', 'Q'), el('p', 'qa__q', item.q),
+        el('span', 'qa__mark qa__mark--a', 'A'), el('p', 'qa__a', item.a));
+      return row;
+    })));
+  }
+  return inner;
+}
+
+function setEventOpen(item, open) {
+  const btn = item.querySelector('.event__btn');
+  btn.setAttribute('aria-expanded', String(open)); // 右端の「＋」「−」もこれで切り替わる(CSS)
+  item.querySelector('.event__body').hidden = !open;
 }
 
 function renderEvents() {
   const events = CONTENT.events;
   $('events').hidden = events.length === 0;
+  const program = CONTENT.timetable.program;
 
-  $('events-list').replaceChildren(...events.map((ev) => {
-    const article = el('article', 'event');
-    if (EVENT_CATEGORIES[ev.category]) {
-      article.append(el('span', `event__tag event__tag--${ev.category}`, EVENT_CATEGORIES[ev.category]));
+  $('events-list').replaceChildren(...events.map((ev, i) => {
+    const item = el('div', 'event');
+    item.id = eventId(ev.name);
+    const colors = (CONTENT.campusColors || {})[ev.campus];
+    if (colors) {
+      item.style.setProperty('--ev-color', colors.color);
+      item.style.setProperty('--ev-ink', colors.ink);
+      item.style.setProperty('--ev-marker', colors.marker);
     }
-    article.append(el('h3', '', ev.name));
 
-    if (isEmptyEvent(ev)) {
-      if (CONTENT.eventsEmptyText) article.append(el('p', 'event__empty', CONTENT.eventsEmptyText));
-      return article;
-    }
-    if (ev.summary) article.append(el('p', 'event__summary', ev.summary));
+    // 閉じている時の1行(行全体がボタン)
+    const btn = el('button', 'event__btn');
+    btn.type = 'button';
+    btn.setAttribute('aria-controls', `event-body-${i + 1}`);
 
-    const rules = ev.rules || [];
-    if (rules.length > 0) {
-      const list = el(ev.rulesNumbered ? 'ol' : 'ul', 'event__rules');
-      list.append(...rules.map((rule) => el('li', '', rule)));
-      article.append(eventBlock('ルール', '', list));
+    const time = el('span', 'event__time');
+    const slot = program.find((p) => p.label === ev.name);
+    if (slot) {
+      time.append(el('span', 'event__start', slot.start));
+      if (slot.end) time.append(el('span', 'event__end', `〜${slot.end}`));
     }
-    if (ev.highlight) article.append(eventBlock('見どころ', 'accent', el('p', '', ev.highlight)));
 
-    // Q&A。「Q.」「A.」の後ろの文の行頭をそろえる(2列のグリッド)
-    const qa = ev.qa || [];
-    if (qa.length > 0) {
-      const box = el('div', 'event__qa');
-      box.append(...qa.map((item) => {
-        const row = el('div', 'qa');
-        row.append(el('span', 'qa__mark', 'Q.'), el('p', 'qa__q', item.q),
-          el('span', 'qa__mark qa__mark--a', 'A.'), el('p', 'qa__a', item.a));
-        return row;
-      }));
-      article.append(eventBlock('Q&A', '', box));
+    const title = el('span', 'event__title');
+    if (EVENT_CATEGORIES[ev.category] || colors) {
+      const cat = el('span', 'event__cat', EVENT_CATEGORIES[ev.category] || '');
+      if (colors) cat.prepend(el('span', 'event__square'));
+      title.append(cat);
     }
-    return article;
+    title.append(el('span', 'event__name', ev.name));
+
+    const sign = el('span', 'event__sign');
+    sign.setAttribute('aria-hidden', 'true');
+    btn.append(time, title, sign);
+
+    const head = el('h3', 'event__head');
+    head.append(btn);
+
+    const body = el('div', 'event__body');
+    body.id = `event-body-${i + 1}`;
+    body.append(eventDetail(ev));
+
+    item.append(head, body);
+    setEventOpen(item, false);
+    btn.addEventListener('click', () => setEventOpen(item, btn.getAttribute('aria-expanded') !== 'true'));
+    return item;
   }));
+}
+
+// URL の #event-競技名 の競技を開いて、そこまでスクロールする(固定ヘッダーの分は scroll-margin で空く)
+function openEventFromHash(scroll) {
+  let name = '';
+  try {
+    name = decodeURIComponent(location.hash.slice(1));
+  } catch (e) {
+    return;
+  }
+  const item = name.startsWith('event-') ? document.getElementById(name) : null;
+  if (!item || !item.classList.contains('event')) return;
+  setEventOpen(item, true);
+  if (scroll) item.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
 
 /* ---------- ほかの企画 ---------- */
@@ -470,15 +550,30 @@ function renderTimetable() {
   }
 
   // 時刻は「10:00〜10:30」。終わりの時刻は少し小さく
+  // 競技説明に同じ名前の競技がある行は、行全体がその競技へのリンク(右端に「→」)
   $('program').replaceChildren(...program.map((p, i) => {
     const li = el('li', 'program__row' + (i === nowIndex ? ' is-now' : ''));
+    const linked = eventNames.has(p.label) && !$('events').hidden;
+    const row = el(linked ? 'a' : 'div', 'program__inner');
     const time = el('span', 'program__time', p.start);
     if (p.end) time.append(el('span', 'program__end', `〜${p.end}`));
-    li.append(time, el('span', 'program__name', p.label));
+    row.append(time, el('span', 'program__name', p.label));
     if (i === nowIndex) {
       li.setAttribute('aria-current', 'step');
-      li.append(el('span', 'program__badge', 'NOW'));
+      row.append(el('span', 'program__badge', 'NOW'));
     }
+    if (linked) {
+      row.href = `#${eventId(p.label)}`;
+      const go = el('span', 'program__go', '→');
+      go.setAttribute('aria-hidden', 'true');
+      row.append(go);
+      // 同じリンクをもう一度押した時(URL が変わらない時)も開く
+      row.addEventListener('click', () => {
+        const item = document.getElementById(eventId(p.label));
+        if (item) setEventOpen(item, true);
+      });
+    }
+    li.append(row);
     return li;
   }));
 }
@@ -489,7 +584,7 @@ const CHECK_LABELS = {
   coverImage: '表紙イラスト', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', label: '名前', runnerImage: '走るキャラ', events: '競技',
-  category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
+  campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
   highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
   image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotText: '間違い探しの説明', spotAnswerImage: '間違い探しの答え',
@@ -554,6 +649,14 @@ function renderCheck() {
   addList('説明が空の競技',
     CONTENT.events.flatMap((ev, i) => (isEmptyEvent(ev) ? [{ path: ['events', i], value: ev.name }] : [])),
     (item) => item.value);
+  // 時刻が入らない競技(タイムテーブルに同じ名前のプログラムがない)・キャンパスの色が無い競技。ある時だけ出す
+  const program = CONTENT.timetable.program;
+  const noTime = CONTENT.events.flatMap((ev, i) => (program.some((p) => p.label === ev.name)
+    ? [] : [{ path: ['events', i, 'name'], value: ev.name }]));
+  if (noTime.length > 0) addList('タイムテーブルに同じ名前がない競技(時刻が出ない)', noTime, (item) => item.value);
+  const noColor = CONTENT.events.flatMap((ev, i) => ((CONTENT.campusColors || {})[ev.campus]
+    ? [] : [{ path: ['events', i, 'campus'], value: `${ev.name} '${ev.campus || ''}'` }]));
+  if (noColor.length > 0) addList('キャンパスの色が見つからない競技', noColor, (item) => item.value);
   // 隠れる枠が無い(またはセクションが空で非表示の)隠れキャラ。ある時だけ出す
   if (hiddenShort) {
     addList(`隠れる枠の候補(hiddenCharFrames)が足りず出せなかった隠れキャラ(候補 ${hiddenPlaced.length}個)`,
@@ -603,3 +706,11 @@ if (CONTENT.timetable.program.length > 0) {
   renderTimetable();
   setInterval(renderTimetable, 60 * 1000);
 }
+
+// #event-競技名 つきの URL で開いた時・タイムテーブルから飛んだ時は、その競技を開く
+// (最初は文字のフォントが読み込まれて位置がずれるので、読み込み後にもう一度合わせる)
+if (location.hash.startsWith('#event-')) {
+  openEventFromHash(true);
+  document.fonts?.ready.then(() => openEventFromHash(true));
+}
+window.addEventListener('hashchange', () => openEventFromHash(false));
