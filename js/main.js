@@ -507,6 +507,42 @@ function programSpans(program) {
   });
 }
 
+// 走るキャラ。コマを全部重ねて置いて(最初に4枚とも読み込む)、見せる1枚を順番に切り替える
+// コマが無い時は点線の丸のまま
+let runnerTimer = null;
+
+function renderRunner() {
+  const { runnerFrames = [], runnerAlt = '' } = CONTENT.timetable;
+  if (runnerFrames.length === 0) return;
+  const runner = $('runner');
+  runner.classList.add('has-frames');
+  runner.replaceChildren(...runnerFrames.map((src, i) => {
+    const img = el('img', 'track__frame' + (i === 0 ? ' is-shown' : ''));
+    img.src = src;
+    img.alt = i === 0 ? runnerAlt : '';
+    return img;
+  }));
+}
+
+// プログラムの時間中だけ走る。それ以外(始まる前・すき間・終わった後)と、動きを減らす設定の時は1コマ目で止まる
+function setRunnerRunning(running) {
+  const frames = $('runner').querySelectorAll('.track__frame');
+  const run = running && frames.length > 1 && !REDUCED_MOTION;
+  if (run === Boolean(runnerTimer)) return;
+  clearInterval(runnerTimer);
+  runnerTimer = null;
+  let shown = 0;
+  const show = (i) => {
+    frames.forEach((f, j) => f.classList.toggle('is-shown', j === i));
+    shown = i;
+  };
+  show(0);
+  if (run) {
+    runnerTimer = setInterval(() => show((shown + 1) % frames.length),
+      CONTENT.timetable.runnerFrameMs || 330);
+  }
+}
+
 function renderTimetable() {
   const { program } = CONTENT.timetable;
   const spans = programSpans(program);
@@ -543,6 +579,7 @@ function renderTimetable() {
   const runner = $('runner');
   runner.style.setProperty('--progress', progress.toFixed(3));
   runner.classList.toggle('is-waiting', now.phase === 'before');
+  setRunnerRunning(nowIndex >= 0);
 
   if (now.isTest) {
     setText($('now-note'),
@@ -583,7 +620,7 @@ const CHECK_LABELS = {
   site: '表紙', name: '名前', slogan: 'スローガン', venue: '会場', date: '日付',
   coverImage: '表紙イラスト', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
-  program: 'プログラム', label: '名前', runnerImage: '走るキャラ', events: '競技',
+  program: 'プログラム', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
   campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
   highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
   image: '画像', others: 'ほかの企画',
@@ -644,6 +681,8 @@ function renderCheck() {
     inner.append(ul);
   };
   addList('まだ［］のまま残っている項目', found.placeholders, (item) => item.value);
+  // 走るキャラのコマ(runnerFrames)が空の時も、画像が未設定として出す
+  if ((CONTENT.timetable.runnerFrames || []).length === 0) found.images.push({ path: ['timetable', 'runnerFrames'] });
   addList('画像が未設定の場所', found.images);
   // ひとこと・ルール・見どころ・Q&A が全部空の競技(サイトには「準備中」の文が出ている)
   addList('説明が空の競技',
@@ -690,7 +729,7 @@ renderPlaces();
 renderEvents();
 renderOthers();
 renderNotices();
-renderImage($('runner'), CONTENT.timetable.runnerImage);
+renderRunner();
 $('timetable').hidden = CONTENT.timetable.program.length === 0;
 renderSpot();
 // 隠れキャラが番号に隠れられるよう、先に番号を振る(おたのしみは、隠れキャラがいれば出る前提)

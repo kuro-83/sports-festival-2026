@@ -445,29 +445,31 @@ p { margin: 0; }
 /* トラック = 緑の帯 + キャラ + ゴール旗 */
 .track {
   position: relative;
-  height: 76px;
+  height: 88px;
 }
 .track__lane {
   position: absolute;
-  left: 0; right: 0; top: 60px;
+  left: 0; right: 0; top: 72px;
   height: 10px;
   border-radius: 5px;
   background: var(--c-accent);
 }
 .track__goal {
   position: absolute;
-  right: 0; top: 34px;
+  right: 0; top: 46px;
   width: 20px; height: 28px;
   color: var(--c-ink);
 }
-/* キャラ。left は JS が --progress(0〜1)で動かす */
+/* キャラ。left は JS が --progress(0〜1)で動かす。キャラの真ん中がその時刻の位置
+   START・GOAL の端では、キャラがトラックの外にはみ出さないところで止める */
 .track__runner {
   --progress: 0;
+  --runner-w: 64px;
   position: absolute;
-  top: 0;
-  left: calc(4% + var(--progress) * 90%);
+  top: 12px; /* トラックを下げた分(12px)だけ下げて、線との位置は前のまま */
+  left: clamp(var(--runner-w) / 2, 4% + var(--progress) * 90%, 100% - var(--runner-w) / 2);
   transform: translateX(-50%);
-  width: 64px; height: 64px;
+  width: var(--runner-w); height: 64px;
   border-radius: 50%;
   border: 1px dashed var(--c-ink);
   background: var(--c-bg);
@@ -480,6 +482,22 @@ p { margin: 0; }
   transition: left 0.6s ease;
 }
 .track__runner img { width: 100%; height: 100%; object-fit: contain; }
+/* コマの絵(img/runner-*.png は 127×240px)。足元が緑の線の上に乗る高さ。4枚重ねて、is-shown の1枚だけ見せる */
+.track__runner.has-frames {
+  --runner-w: 38px;
+  top: 0;
+  height: 72px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+}
+.track__frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.track__frame.is-shown { opacity: 1; }
 .track__runner.is-waiting { opacity: 0.55; }
 
 .track__ends {

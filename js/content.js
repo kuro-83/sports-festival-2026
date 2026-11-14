@@ -63,8 +63,11 @@ const CONTENT = {
       { start: '16:40', end: '17:00', label: '写真撮影' },
       { start: '17:00', end: '17:30', label: '生徒解散' },
     ],
-    // トラックを走るキャラの画像(正方形がおすすめ。丸く切り取られる)
-    runnerImage: { src: '', alt: '' },
+    // トラックを走るキャラのコマ(上から順に切り替えて、走っているように見せる)。空 [] なら点線の丸
+    // 4枚とも同じ大きさ・同じ位置で描いた、背景が透明のPNG。絵の下の端が足元(トラックの線の上に乗る)
+    runnerFrames: ['img/runner-1.png', 'img/runner-2.png', 'img/runner-3.png', 'img/runner-4.png'],
+    runnerFrameMs: 330, // コマを切り替える間隔(ミリ秒)
+    runnerAlt: '走るはとさん',
   },
 
   /* ---------- 03 競技説明＆見どころ ---------- */
