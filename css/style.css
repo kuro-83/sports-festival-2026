@@ -163,7 +163,15 @@ p { margin: 0; }
   --show: 0.6;
   --peek-out: calc(var(--show) * var(--peek-h)); /* 枠から見えている長さ */
 }
-.peek.is-img { width: var(--peek-h); height: var(--peek-h); }
+/* 点線の丸の見た目(枠線・丸い切り抜き・見つけた時の緑の線)は、画像にはつけない(絵が丸く切れないように) */
+.peek.is-img,
+.peek.is-img.is-found {
+  width: var(--peek-h); height: var(--peek-h);
+  border: none;
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+}
 .peek--top.is-img { top: calc(-1 * var(--peek-out)); }
 .peek--left.is-img { left: calc(-1 * var(--peek-out)); }
 .peek--right.is-img { right: calc(-1 * var(--peek-out)); }
