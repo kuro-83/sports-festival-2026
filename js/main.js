@@ -510,6 +510,8 @@ function programSpans(program) {
 // 走るキャラ。コマを全部重ねて置いて(最初に4枚とも読み込む)、見せる1枚を順番に切り替える
 // コマが無い時は点線の丸のまま
 let runnerTimer = null;
+// 止まっている時に見せるコマ = 2コマ目(足をそろえたコマ。足が線に乗る)。コマが1枚だけならそれ
+const runnerStopFrame = (count) => Math.min(1, count - 1);
 
 function renderRunner() {
   const { runnerFrames = [], runnerAlt = '' } = CONTENT.timetable;
@@ -517,14 +519,14 @@ function renderRunner() {
   const runner = $('runner');
   runner.classList.add('has-frames');
   runner.replaceChildren(...runnerFrames.map((src, i) => {
-    const img = el('img', 'track__frame' + (i === 0 ? ' is-shown' : ''));
+    const img = el('img', 'track__frame' + (i === runnerStopFrame(runnerFrames.length) ? ' is-shown' : ''));
     img.src = src;
     img.alt = i === 0 ? runnerAlt : '';
     return img;
   }));
 }
 
-// プログラムの時間中だけ走る。それ以外(始まる前・すき間・終わった後)と、動きを減らす設定の時は1コマ目で止まる
+// プログラムの時間中だけ走る。それ以外(始まる前・すき間・終わった後)と、動きを減らす設定の時は2コマ目で止まる
 function setRunnerRunning(running) {
   const frames = $('runner').querySelectorAll('.track__frame');
   const run = running && frames.length > 1 && !REDUCED_MOTION;
@@ -536,7 +538,7 @@ function setRunnerRunning(running) {
     frames.forEach((f, j) => f.classList.toggle('is-shown', j === i));
     shown = i;
   };
-  show(0);
+  show(runnerStopFrame(frames.length));
   if (run) {
     runnerTimer = setInterval(() => show((shown + 1) % frames.length),
       CONTENT.timetable.runnerFrameMs || 330);
