@@ -154,6 +154,27 @@ p { margin: 0; }
 .peek--top.is-out { transform: translateX(-50%) translateY(-26px); }
 .peek--left.is-out { transform: translateY(-50%) translateX(18px) rotate(0deg); }
 .peek--right.is-out { transform: translateY(-50%) translateX(-18px) rotate(0deg); }
+/* 画像のキャラ(is-img):48px四方の中に、絵の高さいっぱいで入る。キャラの高さの --show(0.6 = 6割)だけ枠から見せる
+   (おにぎりの子は「パンと目のあたりまで」)。タップ中は全身が枠の上に出る */
+.peek.is-img,
+.peek__hit.is-img,
+.peek__bubble.is-img {
+  --peek-h: 48px;
+  --show: 0.6;
+  --peek-out: calc(var(--show) * var(--peek-h)); /* 枠から見えている長さ */
+}
+.peek.is-img { width: var(--peek-h); height: var(--peek-h); }
+.peek--top.is-img { top: calc(-1 * var(--peek-out)); }
+.peek--left.is-img { left: calc(-1 * var(--peek-out)); }
+.peek--right.is-img { right: calc(-1 * var(--peek-out)); }
+.peek--top.is-img.is-out { transform: translateX(-50%) translateY(calc(var(--peek-out) - var(--peek-h) - 4px)); }
+.peek--left.is-img.is-out { transform: translateY(-50%) translateX(calc(var(--peek-out) + 4px)) rotate(0deg); }
+.peek--right.is-img.is-out { transform: translateY(-50%) translateX(calc(-1 * var(--peek-out) - 4px)) rotate(0deg); }
+.frame--num .peek--top.is-img { top: calc(4px - var(--peek-out)); }
+.peek__hit--top.is-img { top: calc(-2px - var(--peek-out)); height: calc(var(--peek-out) + 24px); }
+.peek__hit--left.is-img { left: calc(-1 * var(--peek-out)); width: calc(var(--peek-out) + 30px); }
+.peek__hit--right.is-img { right: calc(-1 * var(--peek-out)); width: calc(var(--peek-out) + 30px); }
+.peek__bubble--top.is-img { top: calc(-1 * var(--peek-h) - 8px); }
 @media (prefers-reduced-motion: reduce) {
   .peek { transition: none; }
 }
@@ -331,6 +352,14 @@ p { margin: 0; }
   min-width: 0;
   height: 340px;
 }
+/* 表紙の絵が入った時:絵の縦横の比率のまま、切り取らずに全体を出す(枠の高さは絵に合わせる)
+   横に並ぶ時(PC)は、絵の高さが 560px をこえない幅に。スマホでは幅いっぱい */
+.cover__illust.has-image {
+  flex: 0 1 calc(560px * var(--ratio, 0.7) + 2px);
+  height: auto;
+}
+.has-image > .ph { height: auto; }
+.has-image > .ph img { height: auto; }
 
 /* ---------- 目次 ---------- */
 .toc {
@@ -809,6 +838,18 @@ a.program__inner { color: inherit; text-decoration: none; }
 }
 .notices p:last-child { border-bottom: none; }
 
+/* ---------- 裏表紙(注意事項の後、フッターの上。絵だけ) ---------- */
+.closing { padding-bottom: 40px; }
+.closing__image {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.closing__image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* ---------- フッター ---------- */
 .footer__inner {
   display: flex;
@@ -854,6 +895,7 @@ a.program__inner { color: inherit; text-decoration: none; }
 @media (max-width: 480px) {
   .cover__body { padding-top: 32px; padding-bottom: 40px; gap: 28px; }
   .cover__illust { height: 260px; }
+  .cover__illust.has-image { flex-basis: 100%; height: auto; }
   .toc { padding: 40px 0; }
   .section { padding: 48px 0; }
   .section__num { font-size: 36px; }

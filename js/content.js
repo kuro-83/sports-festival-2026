@@ -22,8 +22,11 @@ const CONTENT = {
     venue: '［会場名］',
     // 開催日('年-月-日')。表紙の「11.27 FRI」と、タイムテーブルの日付判定に使う
     date: '2026-11-27',
-    // 表紙イラスト
-    coverImage: { src: '', alt: '' },
+    // 表紙イラスト。縦横の比率のまま、切り取らずに全体が出る(PCでは高さ560pxまで)
+    // src = WebP、fallback = WebP が見られないブラウザ用の予備(JPG)、width・height = 画像の大きさ(px。読み込み中にレイアウトがずれないように)
+    coverImage: { src: 'img/cover.webp', fallback: 'img/cover.jpg', width: 1200, height: 1697, alt: '体育祭の表紙イラスト' },
+    // 裏表紙イラスト。ページの最後(注意事項の後、フッターの上)に絵だけ出る。src を空にすると出ない
+    closingImage: { src: 'img/closing.webp', fallback: 'img/closing.jpg', width: 1200, height: 1455, alt: '一致団結' },
   },
 
   /* ---------- 01 施設案内 ---------- */
@@ -162,13 +165,14 @@ const CONTENT = {
   // side  = 顔を出す向き。'top'(枠の上) / 'left'(枠の左) / 'right'(枠の右)。左右は見える所が細いので、目立たせたい時は 'top'
   // pos   = ふちのどのあたりか。'start'(上か左のはし寄り) / 'center'(真ん中) / 'end'(下か右のはし寄り)
   //         番号('num-…')は小さいので、side・pos は使わず、いつも番号の上の真ん中から顔を出す
-  // image = キャラの画像(正方形、背景が透明のPNGがおすすめ。空なら点線の丸)
+  // image = キャラの画像(背景が透明のPNG。余白を切り落として、高さ240px前後に。48px四方に入る大きさで出る。空なら点線の丸)
+  // show  = 画像の時、キャラの高さのどれだけを枠から見せるか(0〜1。書かなければ 0.6)。今は「パンと目のあたりまで」になる値
   // line  = タップした時の吹き出しのセリフ(短めに)
   // 見つけた状態はその人のブラウザに保存される(順番を入れ替えると、保存した状態もずれる)
   hiddenChars: [
-    { frame: 'cover', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ1］' },
-    { frame: 'map', side: 'top', pos: 'end', image: { src: '', alt: '' }, line: '［セリフ2］' },
-    { frame: 'num-3', side: 'top', pos: 'center', image: { src: '', alt: '' }, line: '［セリフ3］' },
+    { frame: 'cover', side: 'top', pos: 'end', image: { src: 'img/hidden-1.png', alt: '隠れているおにぎりの子(はちまき)' }, show: 0.6, line: '［セリフ1］' },
+    { frame: 'map', side: 'top', pos: 'end', image: { src: 'img/hidden-2.png', alt: '隠れているおにぎりの子(はちまき・ぎゅっと目をつぶっている)' }, show: 0.6, line: '［セリフ2］' },
+    { frame: 'num-3', side: 'top', pos: 'center', image: { src: 'img/hidden-3.png', alt: '隠れているおにぎりの子(ナイトキャップでねむそう)' }, show: 0.68, line: '［セリフ3］' },
   ],
   // true = 開くたびにランダムな場所に隠れる / false = 上の frame / side / pos の固定の場所
   hiddenCharsRandom: true,

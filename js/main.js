@@ -34,12 +34,37 @@ function el(tag, className, text) {
 }
 
 // 画像が設定されていれば枠の中身を <img> にする。src が空なら斜線の仮の枠のまま
-function renderImage(box, image) {
+// fallback があれば <picture> にして、src(WebP)が見られないブラウザでは fallback(JPGなど)を出す
+// width・height があれば <img> に付けて、読み込み中も絵の大きさの場所を取っておく(レイアウトがずれない)
+function renderImage(box, image, { lazy = false } = {}) {
   if (!image || !image.src) return;
   const img = document.createElement('img');
-  img.src = image.src;
   img.alt = image.alt || '';
-  box.replaceChildren(img);
+  if (image.width && image.height) {
+    img.width = image.width;
+    img.height = image.height;
+  }
+  if (lazy) img.loading = 'lazy';
+  let node = img;
+  if (image.fallback) {
+    const source = document.createElement('source');
+    source.srcset = image.src;
+    source.type = 'image/webp';
+    node = document.createElement('picture');
+    node.append(source, img);
+  }
+  // src は <picture> に入れてから付ける(先に付けると、使わない方の画像まで読み込み始めるため)
+  img.src = image.fallback || image.src;
+  box.replaceChildren(node);
+}
+
+// 縦横の比率に合わせて枠の高さを変える画像(表紙・裏表紙)
+// 大きさを決める入れ物(holder)に has-image と比率(--ratio = 幅 ÷ 高さ)を付ける
+function renderFittedImage(holder, box, image, options) {
+  if (!image || !image.src) return;
+  renderImage(box, image, options);
+  holder.classList.add('has-image');
+  if (image.width && image.height) holder.style.setProperty('--ratio', image.width / image.height);
 }
 
 // 空の文字なら隠す
@@ -91,7 +116,11 @@ function renderSite() {
   setText($('site-name'), site.name);
   setOptionalText($('site-slogan'), site.slogan);
   setOptionalText($('site-venue'), site.venue && `会場　${site.venue}`);
-  renderImage($('cover-image'), site.coverImage);
+  renderFittedImage($('frame-cover'), $('cover-image'), site.coverImage);
+  // 裏表紙(注意事項の後、フッターの上)。絵だけ。空なら出さない
+  const closing = site.closingImage || {};
+  $('closing').hidden = !closing.src;
+  renderFittedImage($('closing'), $('closing-image'), closing, { lazy: true });
   setText($('footer-name'), `${site.name}　しおり班`);
 }
 
@@ -343,20 +372,26 @@ function renderHiddenChars() {
     frame.dataset.hiddenChar = `${i + 1}:${pos}`; // 確認用(どの枠に何体目がいるか)
 
     // キャラ本体(枠の後ろ)
-    const peek = el('span', `peek peek--${side}`, '?');
+    // 画像の時は、キャラの高さの show(0〜1)だけ枠から見せる(絵によって目の位置が違うので、キャラごとに決められる)
+    const hasImage = Boolean(c.image && c.image.src);
+    const imgClass = hasImage ? ' is-img' : '';
+    const peek = el('span', `peek peek--${side}${imgClass}`, '?');
     peek.setAttribute('aria-hidden', 'true');
     renderImage(peek, c.image);
 
     // タップする所(枠の前。見えている所＋枠の内側まで広げた透明なボタン)
-    const btn = el('button', `peek__hit peek__hit--${side}`);
+    const btn = el('button', `peek__hit peek__hit--${side}${imgClass}`);
     btn.type = 'button';
     btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);
 
-    const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${bubblePos}`);
+    const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${bubblePos}${imgClass}`);
     bubble.setAttribute('aria-live', 'polite');
     bubble.hidden = true;
 
-    [peek, btn, bubble].forEach((node) => node.style.setProperty('--at', PEEK_AT[pos]));
+    [peek, btn, bubble].forEach((node) => {
+      node.style.setProperty('--at', PEEK_AT[pos]);
+      if (hasImage && c.show > 0 && c.show < 1) node.style.setProperty('--show', c.show);
+    });
 
     let timer;
     btn.addEventListener('click', () => {
@@ -620,7 +655,7 @@ function renderTimetable() {
 /* ---------- 入れ忘れチェック(?check の時だけ) ---------- */
 const CHECK_LABELS = {
   site: '表紙', name: '名前', slogan: 'スローガン', venue: '会場', date: '日付',
-  coverImage: '表紙イラスト', places: '施設案内', mapImage: '簡易マップ', list: '場所',
+  coverImage: '表紙イラスト', closingImage: '裏表紙イラスト', fallback: '予備の画像(JPG)', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
   campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
