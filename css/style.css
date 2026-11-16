@@ -498,7 +498,8 @@ p { margin: 0; }
   opacity: 0;
 }
 .track__frame.is-shown { opacity: 1; }
-.track__runner.is-waiting { opacity: 0.55; }
+.track__runner.is-waiting { opacity: 0.55; } /* 当日より前は、点線の丸だけ薄く */
+.track__runner.has-frames.is-waiting { opacity: 1; } /* イラストは当日前もくっきり */
 
 .track__ends {
   display: flex;
