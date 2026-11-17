@@ -20,6 +20,21 @@ const toMinutes = (hm) => {
 const pad = (n, len = 2) => String(n).padStart(len, '0');
 const $ = (id) => document.getElementById(id);
 
+// 当日の遅れ(content.js の DELAY_MIN)。プログラムの時刻を最初に全部ずらしておく
+// タイムテーブル・競技説明の時刻、「いまここ」の判定(?time も)・キャラの位置は、ずらした時刻を使う
+const DELAY = Number(CONTENT.timetable.delayMin) || 0;
+const shiftTime = (hm) => {
+  const t = toMinutes(hm) + DELAY;
+  return `${Math.floor(t / 60)}:${pad(t % 60)}`;
+};
+if (DELAY !== 0) {
+  CONTENT.timetable.program = CONTENT.timetable.program.map((p) => ({
+    ...p,
+    start: shiftTime(p.start),
+    end: p.end && shiftTime(p.end),
+  }));
+}
+
 // 文字は必ずここを通して入れる(textContent なのでタグは効かない)。\n は改行になる
 function setText(node, text) {
   node.textContent = text;
@@ -618,7 +633,12 @@ function renderTimetable() {
   runner.classList.toggle('is-waiting', now.phase === 'before');
   setRunnerRunning(nowIndex >= 0);
 
+  // 遅れている時だけ「※いま、予定より約15分遅れて進んでいます」
+  setOptionalText($('now-delay'),
+    DELAY === 0 ? '' : `※いま、予定より約${Math.abs(DELAY)}分${DELAY > 0 ? '遅れて' : '早く'}進んでいます`);
+
   if (now.isTest) {
+    $('now-note').hidden = false;
     setText($('now-note'),
       `※テスト表示中:${MD} ${Math.floor(now.minutes / 60)}:${pad(now.minutes % 60)} として表示しています`);
   }
@@ -657,7 +677,7 @@ const CHECK_LABELS = {
   site: '表紙', name: '名前', slogan: 'スローガン', venue: '会場', date: '日付',
   coverImage: '表紙イラスト', closingImage: '裏表紙イラスト', fallback: '予備の画像(JPG)', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
-  program: 'プログラム', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
+  program: 'プログラム', delayMin: '遅れ(分)', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
   campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
   highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
   image: '画像', others: 'ほかの企画',
