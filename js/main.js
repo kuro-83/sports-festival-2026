@@ -2,6 +2,7 @@
    体育祭しおり
    ・js/content.js(CONTENT)の中身でページを組み立てる
    ・タイムテーブル + 「いまここ」
+   ・競技説明(アコーディオン)・応援コール＆グッズ
    ・おたのしみ(隠れキャラ探し、間違い探しの答え)
    ・ハンバーガーメニュー
    ・入れ忘れチェック
@@ -121,9 +122,9 @@ const MD = `${MONTH}/${DAY}`;
 /* ---------- 表紙・サイト全体 ---------- */
 function renderSite() {
   const site = CONTENT.site;
-  document.title = `${site.name} しおり | SPORTS DAY ${YEAR}`;
+  document.title = `${site.name}｜SPORTS DAY ${YEAR} しおり`;
   document.querySelector('meta[name="description"]').content =
-    `${MONTH}月${DAY}日(${WEEKDAYS_JA[WEEKDAY]}) ${site.name}のしおり。施設案内・タイムテーブル・競技説明など。`;
+    `${MONTH}月${DAY}日(${WEEKDAYS_JA[WEEKDAY]}) ${site.name}(体育祭)のしおり。タイムテーブル・競技説明・応援コールなど。`;
 
   setText($('site-brand'), `SPORTS DAY ${YEAR}`);
   setText($('site-day'), `${MONTH}.${pad(DAY)}`);
@@ -157,17 +158,23 @@ function renderPlaces() {
 
 /* ---------- 競技説明 ----------
    一覧(時刻・ガチ/ゆる・競技名)を押すと、その競技の説明が開く(アコーディオン。1つずつ開け閉めできる)
-   開いた中身:ひとこと → RULE → HIGHLIGHT → Q&A。説明が全部空の競技は eventsEmptyText だけ
-   色は担当キャンパスの色(campusColors)。時刻はタイムテーブルの同じ名前のプログラムから取る */
+   開いた中身:ABOUT(ひとこと → ルール) → HIGHLIGHT → Q&A。説明が全部空の競技は eventsEmptyText だけ
+   色は担当キャンパスの色(campusColors)。時刻はタイムテーブルの同じ名前のプログラムから取る
+   (タイムテーブルでの名前が違う競技は timetableName で探す) */
 const EVENT_CATEGORIES = { gachi: 'ガチ競技', yuru: 'ゆる競技' };
 
-const isEmptyEvent = (ev) => !ev.summary && !(ev.rules || []).length && !ev.highlight && !(ev.qa || []).length;
+// 見どころの行。[ '1行目', '2行目' ] でも '1行目\n2行目' でもいい
+const highlightLines = (h) => (Array.isArray(h) ? h : String(h || '').split('\n')).filter((line) => line);
+const isEmptyEvent = (ev) => !ev.summary && !(ev.rules || []).length
+  && highlightLines(ev.highlight).length === 0 && !(ev.qa || []).length;
 
 // 競技の場所の id。タイムテーブルからのリンクと URL の #event-競技名 に使う
 const eventId = (name) => `event-${name}`;
-const eventNames = new Set(CONTENT.events.map((ev) => ev.name));
+// タイムテーブルでの名前(timetableName。なければ name)→ 競技名
+const timetableName = (ev) => ev.timetableName || ev.name;
+const eventByLabel = new Map(CONTENT.events.map((ev) => [timetableName(ev), ev.name]));
 
-// 小見出し(RULE・HIGHLIGHT・Q&A)と中身のまとまり
+// 小見出し(ABOUT・HIGHLIGHT・Q&A)と中身のまとまり
 function eventBlock(label, ...content) {
   const block = el('div', 'event__block');
   block.append(el('p', 'event__label', label), ...content);
@@ -180,9 +187,9 @@ function eventDetail(ev) {
     if (CONTENT.eventsEmptyText) inner.append(el('p', 'event__empty', CONTENT.eventsEmptyText));
     return inner;
   }
-  if (ev.summary) inner.append(el('p', 'event__summary', ev.summary));
-
-  // ルール。番号つきは2列で「1 けんけん」、ふつうは1列で「— 〇〇」
+  // ABOUT = ひとこと(太字)の下にルール。番号つきは2列で「1 けんけん」、ふつうは1列で「— 〇〇」
+  const about = [];
+  if (ev.summary) about.push(el('p', 'event__summary', ev.summary));
   const rules = ev.rules || [];
   if (rules.length > 0) {
     const list = el(ev.rulesNumbered ? 'ol' : 'ul', `event__rules${ev.rulesNumbered ? ' event__rules--numbered' : ''}`);
@@ -194,14 +201,18 @@ function eventDetail(ev) {
       li.append(mark, el('span', '', rule));
       return li;
     }));
-    inner.append(eventBlock('RULE', list));
+    about.push(list);
   }
+  if (about.length > 0) inner.append(eventBlock('ABOUT', ...about));
 
-  // 見どころ。文字の下半分にキャンパスの色の薄いマーカー
-  if (ev.highlight) {
-    const p = el('p', 'event__highlight');
-    p.append(el('span', '', ev.highlight));
-    inner.append(eventBlock('HIGHLIGHT', p));
+  // 見どころ。1行ずつ、文字の下半分にキャンパスの色の薄いマーカー
+  const highlight = highlightLines(ev.highlight);
+  if (highlight.length > 0) {
+    inner.append(eventBlock('HIGHLIGHT', ...highlight.map((line) => {
+      const p = el('p', 'event__highlight');
+      p.append(el('span', '', line));
+      return p;
+    })));
   }
 
   // Q&A。「Q」「A」の後ろの文の行頭をそろえる(2列のグリッド)
@@ -244,7 +255,7 @@ function renderEvents() {
     btn.setAttribute('aria-controls', `event-body-${i + 1}`);
 
     const time = el('span', 'event__time');
-    const slot = program.find((p) => p.label === ev.name);
+    const slot = program.find((p) => p.label === timetableName(ev));
     if (slot) {
       time.append(el('span', 'event__start', slot.start));
       if (slot.end) time.append(el('span', 'event__end', `〜${slot.end}`));
@@ -290,6 +301,55 @@ function openEventFromHash(scroll) {
   if (scroll) item.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
 
+/* ---------- 応援コール＆グッズ ----------
+   コール(「応援団」「みんな」の小さい見出し + 文)・応援歌の案内・グッズの一覧。イラストはグッズの見出しの横
+   コール・応援歌・グッズが全部空なら、セクションごと隠す */
+// コールの文。空白(全角・半角)で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない。\n は改行
+function callText(text) {
+  const dd = el('dd', 'call__text');
+  text.split('\n').forEach((row, n) => {
+    if (n > 0) dd.append(document.createElement('br'));
+    row.split(/([　 ]+)/).forEach((part) => {
+      if (!part) return;
+      dd.append(/^[　 ]+$/.test(part) ? part : el('span', 'call__chunk', part));
+    });
+  });
+  return dd;
+}
+
+function renderCheer() {
+  const { calls = [], song = {}, goods = [], image } = CONTENT.cheer || {};
+  const hasSong = Boolean(song.title || song.note);
+  $('cheer').hidden = calls.length === 0 && !hasSong && goods.length === 0;
+
+  $('cheer-calls').hidden = calls.length === 0;
+  $('cheer-calls-list').replaceChildren(...calls.map((call) => {
+    const item = el('div', 'call');
+    if (call.title) item.append(el('h4', 'call__title', call.title));
+    const lines = el('dl', 'call__lines');
+    (call.lines || []).forEach((line) => {
+      lines.append(el('dt', 'call__who', line.who || ''), callText(line.text || ''));
+    });
+    item.append(lines);
+    return item;
+  }));
+
+  $('cheer-song').hidden = !hasSong;
+  setOptionalText($('cheer-song-title'), song.title);
+  setOptionalText($('cheer-song-note'), song.note);
+
+  $('cheer-goods').hidden = goods.length === 0;
+  $('cheer-goods-list').replaceChildren(...goods.map((g) => {
+    const item = el('div', 'good');
+    item.append(el('strong', '', g.name));
+    if (g.desc) item.append(el('span', '', g.desc));
+    return item;
+  }));
+  const deco = $('cheer-image');
+  deco.hidden = !(image && image.src);
+  renderImage(deco, image, { lazy: true });
+}
+
 /* ---------- ほかの企画 ---------- */
 function renderOthers() {
   const others = CONTENT.others;
@@ -307,6 +367,11 @@ function renderOthers() {
 function renderSpot() {
   const { spotText, spotAnswerImage } = CONTENT.fun;
   $('spot').hidden = !spotText && !spotAnswerImage.src;
+  // 答えの画像がまだ無い時は、斜線の枠の代わりに「答えは準備中！」の1行
+  if (!spotAnswerImage.src) {
+    spotAnswer.className = 'spot__pending';
+    setText(spotAnswer, CONTENT.fun.spotPendingText || '');
+  }
   setOptionalText($('spot-text'), spotText);
 }
 
@@ -647,7 +712,8 @@ function renderTimetable() {
   // 競技説明に同じ名前の競技がある行は、行全体がその競技へのリンク(右端に「→」)
   $('program').replaceChildren(...program.map((p, i) => {
     const li = el('li', 'program__row' + (i === nowIndex ? ' is-now' : ''));
-    const linked = eventNames.has(p.label) && !$('events').hidden;
+    const eventName = eventByLabel.get(p.label);
+    const linked = Boolean(eventName) && !$('events').hidden;
     const row = el(linked ? 'a' : 'div', 'program__inner');
     const time = el('span', 'program__time', p.start);
     if (p.end) time.append(el('span', 'program__end', `〜${p.end}`));
@@ -657,13 +723,13 @@ function renderTimetable() {
       row.append(el('span', 'program__badge', 'NOW'));
     }
     if (linked) {
-      row.href = `#${eventId(p.label)}`;
+      row.href = `#${eventId(eventName)}`;
       const go = el('span', 'program__go', '→');
       go.setAttribute('aria-hidden', 'true');
       row.append(go);
       // 同じリンクをもう一度押した時(URL が変わらない時)も開く
       row.addEventListener('click', () => {
-        const item = document.getElementById(eventId(p.label));
+        const item = document.getElementById(eventId(eventName));
         if (item) setEventOpen(item, true);
       });
     }
@@ -678,10 +744,12 @@ const CHECK_LABELS = {
   coverImage: '表紙イラスト', closingImage: '裏表紙イラスト', fallback: '予備の画像(JPG)', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', delayMin: '遅れ(分)', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
-  campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
+  timetableName: 'タイムテーブルでの名前', campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
   highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
   image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotText: '間違い探しの説明', spotAnswerImage: '間違い探しの答え',
+  spotPendingText: '答えが準備中の時の文',
+  cheer: '応援', calls: 'コール', lines: 'セリフ', who: 'だれが', song: '応援歌', note: '説明', goods: 'グッズ', desc: '説明',
   notices: '注意事項',
   hiddenChars: '隠れキャラ', frame: '隠れる枠', line: 'セリフ',
   hiddenCharsText: '隠れキャラ探しの説明', hiddenCharsDone: '全部見つけた時のメッセージ',
@@ -740,6 +808,8 @@ function renderCheck() {
   addList('まだ［］のまま残っている項目', found.placeholders, (item) => item.value);
   // 走るキャラのコマ(runnerFrames)が空の時も、画像が未設定として出す
   if ((CONTENT.timetable.runnerFrames || []).length === 0) found.images.push({ path: ['timetable', 'runnerFrames'] });
+  // 施設案内が非表示(場所の一覧も地図も空 = わざと使っていない)の時は、簡易マップを未設定に数えない
+  if ($('map').hidden) found.images = found.images.filter((item) => item.path[0] !== 'places');
   addList('画像が未設定の場所', found.images);
   // ひとこと・ルール・見どころ・Q&A が全部空の競技(サイトには「準備中」の文が出ている)
   addList('説明が空の競技',
@@ -747,8 +817,8 @@ function renderCheck() {
     (item) => item.value);
   // 時刻が入らない競技(タイムテーブルに同じ名前のプログラムがない)・キャンパスの色が無い競技。ある時だけ出す
   const program = CONTENT.timetable.program;
-  const noTime = CONTENT.events.flatMap((ev, i) => (program.some((p) => p.label === ev.name)
-    ? [] : [{ path: ['events', i, 'name'], value: ev.name }]));
+  const noTime = CONTENT.events.flatMap((ev, i) => (program.some((p) => p.label === timetableName(ev))
+    ? [] : [{ path: ['events', i, ev.timetableName ? 'timetableName' : 'name'], value: timetableName(ev) }]));
   if (noTime.length > 0) addList('タイムテーブルに同じ名前がない競技(時刻が出ない)', noTime, (item) => item.value);
   const noColor = CONTENT.events.flatMap((ev, i) => ((CONTENT.campusColors || {})[ev.campus]
     ? [] : [{ path: ['events', i, 'campus'], value: `${ev.name} '${ev.campus || ''}'` }]));
@@ -784,6 +854,7 @@ function renderCheck() {
 renderSite();
 renderPlaces();
 renderEvents();
+renderCheer();
 renderOthers();
 renderNotices();
 renderRunner();

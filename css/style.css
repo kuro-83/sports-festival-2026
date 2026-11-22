@@ -698,6 +698,7 @@ a.program__inner { color: inherit; text-decoration: none; }
   .event__body:not([hidden]) .event__inner { animation: none; }
 }
 .event__summary { font-weight: 700; font-size: 15px; line-height: 1.6; }
+.event__summary + .event__rules { margin-top: 6px; }
 .event__empty { font-size: 14px; color: var(--c-muted); }
 
 /* RULE・HIGHLIGHT・Q&A = Oswaldの小さいグレーの見出し + 中身 */
@@ -752,7 +753,83 @@ a.program__inner { color: inherit; text-decoration: none; }
 .qa__mark--a { color: var(--ev-ink); }
 .qa__q { font-weight: 700; }
 
-/* ---------- 04 ほかの企画 ---------- */
+/* ---------- 応援コール＆グッズ ----------
+   CALL・SONG・GOODS = Oswaldの緑の小見出し。コールは左に「応援団」「みんな」の小さい見出し、右に文(罫線で区切る) */
+.cheer {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.cheer__block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cheer__label {
+  font-family: var(--f-num);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--c-accent);
+}
+.calls {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.call__title {
+  margin: 0 0 6px;
+  font-family: var(--f-head);
+  font-weight: 800;
+  font-size: 18px;
+}
+.call__lines {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--c-ink);
+}
+.call__who,
+.call__text {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: var(--line-item);
+}
+.call__who {
+  padding-right: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.9; /* 右の文(15px)の1行目と高さをそろえる */
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+.call__text { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+/* 空白で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない(main.js の callText) */
+.call__chunk { display: inline-block; max-width: 100%; }
+.song__title { font-weight: 700; font-size: 16px; }
+.song__note { font-size: 14px; line-height: 1.7; }
+/* グッズの見出しの行の右に、小さくイラスト */
+.cheer__goods-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: -4px;
+}
+.cheer__image { width: 140px; flex: 0 0 auto; }
+.cheer__image img { display: block; width: 100%; height: auto; }
+.goods { border-top: 1px solid var(--c-ink); }
+.good {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: var(--line-item);
+}
+.good:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
+.good span { font-size: 14px; color: var(--c-muted); }
+
+/* ---------- ほかの企画 ---------- */
 .other {
   display: flex;
   flex-direction: column;
@@ -762,7 +839,7 @@ a.program__inner { color: inherit; text-decoration: none; }
 }
 .other:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
 
-/* ---------- 05 おたのしみ ----------
+/* ---------- おたのしみ ----------
    隠れキャラ探し・間違い探しを同じ形(小見出し → 中身)にそろえる。間はグレーの線1本だけ */
 .fun {
   display: flex;
@@ -820,6 +897,7 @@ a.program__inner { color: inherit; text-decoration: none; }
   height: 240px;
 }
 .ph--answer:has(img) { height: auto; }
+.spot__pending { font-weight: 700; }
 .ph--answer img { height: auto; }
 
 /* 全部見つけた時の紙吹雪 */
@@ -840,7 +918,7 @@ a.program__inner { color: inherit; text-decoration: none; }
   to { transform: translateY(110vh) rotate(var(--spin)); }
 }
 
-/* ---------- 06 注意事項 ---------- */
+/* ---------- 注意事項 ---------- */
 .notices p {
   padding: 14px 0;
   border-bottom: var(--line-item);
@@ -910,6 +988,7 @@ a.program__inner { color: inherit; text-decoration: none; }
   .section__num { font-size: 36px; }
   .section__head h2 { font-size: 24px; }
   .ph--map { height: 240px; }
+  .cheer__image { width: 110px; }
   .program__inner { gap: 12px; padding: 14px 8px; }
   .program__time { min-width: 96px; font-size: 20px; }
   .program__end { font-size: 13px; }
