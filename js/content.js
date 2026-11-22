@@ -251,9 +251,9 @@ const CONTENT = {
   /* ---------- ほかの企画 ---------- */
   // 空 [] にすると、セクションごと消えて、後ろの番号が繰り上がる
   // title = 企画名(空なら説明だけ出る)、text = 説明
-  others: [
-    { title: '［企画名］', text: '［他の班から載せてほしい情報があればここに］' },
-  ],
+  // 今は使っていない(応援コール＆グッズがその役割)。載せたい企画が出たら、例のように足すと復活する
+  // 例: { title: '写真ブース', text: '昼休憩の間、体育館の入口で撮影できるよ' },
+  others: [],
 
   /* ---------- おたのしみ ---------- */
   // 「隠れキャラ探し」と「間違い探し」の2つ。両方とも空なら、おたのしみのセクションごと消える
@@ -285,9 +285,9 @@ const CONTENT = {
   // line  = タップした時の吹き出しのセリフ(短めに)
   // 見つけた状態はその人のブラウザに保存される(順番を入れ替えると、保存した状態もずれる)
   hiddenChars: [
-    { frame: 'cover', side: 'top', pos: 'end', image: { src: 'img/hidden-1.png', alt: '隠れているおにぎりの子(はちまき)' }, show: 0.6, line: '［セリフ1］' },
-    { frame: 'map', side: 'top', pos: 'end', image: { src: 'img/hidden-2.png', alt: '隠れているおにぎりの子(はちまき・ぎゅっと目をつぶっている)' }, show: 0.6, line: '［セリフ2］' },
-    { frame: 'num-3', side: 'top', pos: 'center', image: { src: 'img/hidden-3.png', alt: '隠れているおにぎりの子(ナイトキャップでねむそう)' }, show: 0.68, line: '［セリフ3］' },
+    { frame: 'cover', side: 'top', pos: 'end', image: { src: 'img/hidden-1.png', alt: '隠れているおにぎりの子(はちまき)' }, show: 0.6, line: '見つかっちゃった！' },
+    { frame: 'map', side: 'top', pos: 'end', image: { src: 'img/hidden-2.png', alt: '隠れているおにぎりの子(はちまき・ぎゅっと目をつぶっている)' }, show: 0.6, line: 'わっ！びっくりした〜〜' },
+    { frame: 'num-3', side: 'top', pos: 'center', image: { src: 'img/hidden-3.png', alt: '隠れているおにぎりの子(ナイトキャップでねむそう)' }, show: 0.68, line: 'まだ寝てたのに…' },
   ],
   // true = 開くたびにランダムな場所に隠れる / false = 上の frame / side / pos の固定の場所
   hiddenCharsRandom: true,
@@ -297,7 +297,7 @@ const CONTENT = {
   // 「隠れキャラ探し」の見出しの下の1行の説明。空にすると消える
   hiddenCharsText: 'イラストや番号のうしろに、キャラが隠れてるよ',
   // 全部見つけた時に出る、緑の文字1行のメッセージ(紙吹雪も出る)
-  hiddenCharsDone: '［全部見つけた時のメッセージ］',
+  hiddenCharsDone: '全員見つけた！きみの観察力、優勝！',
 
   /* ---------- 注意事項 ---------- */
   // 注意事項。1件1行。空 [] にすると、セクションごと消える
