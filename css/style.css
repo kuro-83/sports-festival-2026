@@ -12,6 +12,7 @@
   --c-rule: #DDDDDA;       /* 薄いグレーの線 */
   --c-hairline: #EEEEEB;   /* とても薄い線(競技説明のQ&Aの間) */
   --c-paper: #F1F1EE;      /* プレースホルダーの斜線 */
+  --c-marker: #BFE6CB;     /* 注意事項の大事な言葉の下に引く、薄い緑のマーカー */
 
   /* 線(ルールは2つだけ) */
   --line-section: 1px solid var(--c-ink); /* セクションとセクションの間 */
@@ -65,6 +66,10 @@ p { margin: 0; }
 
 /* content.js の文字に \n があれば改行する */
 .pre-line { white-space: pre-line; }
+
+/* 日本語の文を、文節の切れ目(main.js が入れる <wbr>)と空白だけで折り返す
+   1つの文節が1行に入らない時だけ、保険で途中でも折る */
+.phrases { word-break: keep-all; overflow-wrap: anywhere; }
 
 .wrap {
   max-width: var(--max-w);
@@ -230,6 +235,20 @@ p { margin: 0; }
 .peek__bubble--left { left: 0; }
 .peek__bubble--right { right: 0; }
 
+/* 黒い線に隠れる時(.frame--line):線の上のふち(=地面)に高さ0の入れ物を置いて、そこから下を切る
+   キャラは入れ物の上のふちから --peek-out だけ上に出て、残り(線より下)は見えない
+   タップ中は全身が線の上に出る(上のルールのまま)。タップする所は、切られない線より上だけで 44px 以上 */
+.frame--line {
+  position: absolute;
+  left: 0; right: 0;
+  top: 100%; /* セクションの下の線:セクションの中身の下のふち = 線の上のふち */
+  height: 0;
+  z-index: 5;
+  clip-path: inset(-300px -100vw 0 -100vw);
+}
+.call__lines > .frame--line { top: -1px; } /* コール名の下の線(.call__lines の上の線)の上のふち */
+.frame--line .peek__hit--top.is-img { top: calc(-18px - var(--peek-out)); height: calc(var(--peek-out) + 18px); }
+
 /* ---------- 細かいストライプ(表紙の下とフッター) ---------- */
 .track-stripe {
   height: 6px;
@@ -355,6 +374,26 @@ p { margin: 0; }
   border-left: 4px solid var(--c-accent);
 }
 .cover__venue { font-size: 14px; color: var(--c-muted); }
+/* スローガンの横断幕の写真。小さい「SLOGAN」の見出しの下に、スマホで画面の7割くらい・PCで320px */
+.cover__banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cover__banner-label {
+  font-family: var(--f-num);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: var(--c-muted);
+}
+.cover__banner-image { width: min(320px, 70vw); }
+.cover__banner-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 .cover__illust {
   flex: 1 1 300px;
   min-width: 0;
@@ -398,6 +437,7 @@ p { margin: 0; }
 
 /* ---------- セクション共通 ---------- */
 .section {
+  position: relative; /* 下の線に隠れキャラ(.frame--line)が入る */
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -752,9 +792,13 @@ a.program__inner { color: inherit; text-decoration: none; }
 .qa__mark { font-family: var(--f-num); font-weight: 700; }
 .qa__mark--a { color: var(--ev-ink); }
 .qa__q { font-weight: 700; }
+/* 答えにリストがある時(ドッヂビーのルーレットなど):リスト → 文 */
+.qa__a { display: flex; flex-direction: column; gap: 4px; }
+.qa__a .event__rules { font-size: inherit; }
 
-/* ---------- 応援コール＆グッズ ----------
-   CALL・SONG・GOODS = Oswaldの緑の小見出し。コールは左に「応援団」「みんな」の小さい見出し、右に文(罫線で区切る) */
+/* ---------- 応援コール ----------
+   コールは左に「応援団」「みんな」の小さい見出し、右に文(罫線で区切る)。最後に応援歌の1行
+   GOODS(グッズの一覧。今は出ていない)= Oswaldの緑の小見出し */
 .cheer {
   display: flex;
   flex-direction: column;
@@ -777,13 +821,24 @@ a.program__inner { color: inherit; text-decoration: none; }
   flex-direction: column;
   gap: 24px;
 }
+/* コール名の行。1つめは右にイラスト(下のふちをそろえる) */
+.call__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 6px;
+}
 .call__title {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: var(--f-head);
   font-weight: 800;
   font-size: 18px;
 }
+.call__image { width: 140px; flex: 0 0 auto; }
+.call__image img { display: block; width: 100%; height: auto; }
 .call__lines {
+  position: relative; /* 上の線に隠れキャラ(.frame--line)が入る */
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   margin: 0;
@@ -806,18 +861,8 @@ a.program__inner { color: inherit; text-decoration: none; }
 .call__text { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
 /* 空白で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない(main.js の callText) */
 .call__chunk { display: inline-block; max-width: 100%; }
-.song__title { font-weight: 700; font-size: 16px; }
-.song__note { font-size: 14px; line-height: 1.7; }
-/* グッズの見出しの行の右に、小さくイラスト */
-.cheer__goods-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
-  margin-bottom: -4px;
-}
-.cheer__image { width: 140px; flex: 0 0 auto; }
-.cheer__image img { display: block; width: 100%; height: auto; }
+/* コールの最後の、応援歌の1行 */
+.cheer__song { font-size: 13px; color: var(--c-muted); }
 .goods { border-top: 1px solid var(--c-ink); }
 .good {
   display: flex;
@@ -840,7 +885,7 @@ a.program__inner { color: inherit; text-decoration: none; }
 .other:last-child { border-bottom: none; } /* 下のセクションの黒い線と二重にならないように */
 
 /* ---------- おたのしみ ----------
-   隠れキャラ探し・間違い探しを同じ形(小見出し → 中身)にそろえる。間はグレーの線1本だけ */
+   小見出し → 中身。項目が2つ以上になったら、間はグレーの線1本だけ */
 .fun {
   display: flex;
   flex-direction: column;
@@ -857,27 +902,6 @@ a.program__inner { color: inherit; text-decoration: none; }
   padding-top: 24px;
   border-top: var(--line-item);
 }
-
-/* 隠れキャラ探し:●●○ 2 / 3 */
-.hunt__progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.hunt__dots { display: flex; gap: 6px; }
-.hunt__dots span {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  border: 1px solid var(--c-ink);
-}
-.hunt__dots .is-on { background: var(--c-accent); border-color: var(--c-accent); }
-.hunt__count {
-  font-family: var(--f-num);
-  font-weight: 500;
-  font-size: 16px;
-  letter-spacing: 0.05em;
-}
-.hunt__done { font-weight: 700; color: var(--c-accent); }
 
 /* 間違い探しの答え */
 .btn-sub {
@@ -918,12 +942,37 @@ a.program__inner { color: inherit; text-decoration: none; }
   to { transform: translateY(110vh) rotate(var(--spin)); }
 }
 
-/* ---------- 注意事項 ---------- */
-.notices p {
+/* ---------- 注意事項 ----------
+   左にOswaldの黒い番号(01〜)、右に文。大事な言葉は太字＋文字の下半分に薄い緑のマーカー */
+.notices {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
   padding: 14px 0;
   border-bottom: var(--line-item);
 }
-.notices p:last-child { border-bottom: none; }
+.notice:last-child { border-bottom: none; }
+.notice__num {
+  flex: 0 0 auto;
+  min-width: 1.6em;
+  font-family: var(--f-num);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--c-ink);
+}
+.notice__text { min-width: 0; }
+.notice__strong {
+  font-weight: 700;
+  background: linear-gradient(transparent 60%, var(--c-marker) 60%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
 
 /* ---------- 裏表紙(注意事項の後、フッターの上。絵だけ) ---------- */
 .closing { padding-bottom: 40px; }
@@ -988,7 +1037,7 @@ a.program__inner { color: inherit; text-decoration: none; }
   .section__num { font-size: 36px; }
   .section__head h2 { font-size: 24px; }
   .ph--map { height: 240px; }
-  .cheer__image { width: 110px; }
+  .call__image { width: 110px; }
   .program__inner { gap: 12px; padding: 14px 8px; }
   .program__time { min-width: 96px; font-size: 20px; }
   .program__end { font-size: 13px; }

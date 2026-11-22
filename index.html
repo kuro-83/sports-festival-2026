@@ -60,7 +60,12 @@
         <span class="cover__weekday" id="site-weekday"></span>
       </div>
       <h1 class="cover__title" id="site-name"></h1>
+      <!-- スローガン。横断幕の写真(content.js の site.sloganImage)があれば写真、なければ文字 -->
       <p class="cover__slogan" id="site-slogan"></p>
+      <div class="cover__banner" id="site-banner" hidden>
+        <p class="cover__banner-label">SLOGAN</p>
+        <div class="cover__banner-image" id="site-banner-image"></div>
+      </div>
       <p class="cover__venue" id="site-venue"></p>
     </div>
     <!-- .frame = イラストの枠。隠れキャラはこの中で、枠(.ph)の後ろに入る -->
@@ -74,14 +79,14 @@
 <main class="wrap">
 
   <!-- 番号(01〜)は、表示されているセクションだけで自動で振られる
-       見出しの大きい番号(.section__num)も隠れキャラの枠。キャラは数字(.section__digits)の後ろに入る -->
+       セクションの下の黒い線・応援コールのコール名の下の線は、隠れキャラの隠れ場所(main.js が入れる) -->
   <nav id="toc" class="toc" aria-label="目次">
     <p class="eyebrow">CONTENTS</p>
     <div class="toc__list">
       <a href="#map"><span class="num"></span>施設案内</a>
       <a href="#timetable"><span class="num"></span>タイムテーブル</a>
-      <a href="#events"><span class="num"></span>競技説明＆見どころ</a>
-      <a href="#cheer"><span class="num"></span>応援コール＆グッズ</a>
+      <a href="#events"><span class="num"></span>競技説明</a>
+      <a href="#cheer"><span class="num"></span>応援コール</a>
       <a href="#others"><span class="num"></span>ほかの企画</a>
       <a href="#fun"><span class="num"></span>おたのしみ</a>
       <a href="#notice"><span class="num"></span>注意事項</a>
@@ -131,36 +136,30 @@
     <ol class="program" id="program"></ol>
   </section>
 
-  <!-- 競技説明＆見どころ -->
+  <!-- 競技説明 -->
   <section id="events" class="section">
     <div class="section__head">
       <span class="section__num frame frame--num"><span class="section__digits"></span></span>
-      <h2>競技説明＆見どころ</h2>
+      <h2>競技説明</h2>
     </div>
     <div class="events" id="events-list"></div>
   </section>
 
-  <!-- 応援コール＆グッズ(中身は content.js の cheer) -->
+  <!-- 応援コール(中身は content.js の cheer) -->
   <section id="cheer" class="section">
     <div class="section__head">
       <span class="section__num frame frame--num"><span class="section__digits"></span></span>
-      <h2>応援コール＆グッズ</h2>
+      <h2>応援コール</h2>
     </div>
     <div class="cheer">
+      <!-- コール(1つめのコール名の横にイラスト)→ 最後に応援歌の1行 -->
       <div class="cheer__block" id="cheer-calls">
-        <h3 class="cheer__label">CALL</h3>
         <div class="calls" id="cheer-calls-list"></div>
+        <p class="cheer__song" id="cheer-song"></p>
       </div>
-      <div class="cheer__block" id="cheer-song">
-        <h3 class="cheer__label">SONG</h3>
-        <p class="song__title" id="cheer-song-title"></p>
-        <p class="song__note" id="cheer-song-note"></p>
-      </div>
+      <!-- 応援グッズ(content.js の cheer.goods が空なので、今は出ない) -->
       <div class="cheer__block" id="cheer-goods">
-        <div class="cheer__goods-head">
-          <h3 class="cheer__label">GOODS</h3>
-          <div class="cheer__image" id="cheer-image" hidden></div>
-        </div>
+        <h3 class="cheer__label">GOODS</h3>
         <div class="goods" id="cheer-goods-list"></div>
       </div>
     </div>
@@ -182,17 +181,6 @@
       <h2>おたのしみ</h2>
     </div>
     <div class="fun">
-      <!-- 隠れキャラ探し(hiddenChars が空なら出ない) -->
-      <div class="fun__item" id="hunt" hidden>
-        <h3>隠れキャラ探し</h3>
-        <p id="hunt-text"></p>
-        <p class="hunt__progress">
-          <span class="visually-hidden">見つけた数</span>
-          <span class="hunt__dots" id="hunt-dots" aria-hidden="true"></span>
-          <span class="hunt__count" id="hunt-count" aria-live="polite"></span>
-        </p>
-        <p class="hunt__done" id="hunt-done" hidden></p>
-      </div>
       <!-- 間違い探しの答え(説明も画像も空なら出ない) -->
       <div class="fun__item" id="spot">
         <h3>間違い探し</h3>
@@ -209,7 +197,7 @@
       <span class="section__num frame frame--num"><span class="section__digits"></span></span>
       <h2>注意事項</h2>
     </div>
-    <div class="notices" id="notices-list"></div>
+    <ol class="notices" id="notices-list" role="list"></ol>
   </section>
 
 </main>
@@ -227,6 +215,7 @@
   </div>
 </footer>
 
+<script src="js/vendor/budoux/budoux-ja.js"></script>
 <script src="js/content.js"></script>
 <script src="js/main.js"></script>
 </body>

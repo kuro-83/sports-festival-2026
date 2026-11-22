@@ -2,8 +2,9 @@
    体育祭しおり
    ・js/content.js(CONTENT)の中身でページを組み立てる
    ・タイムテーブル + 「いまここ」
-   ・競技説明(アコーディオン)・応援コール＆グッズ
-   ・おたのしみ(隠れキャラ探し、間違い探しの答え)
+   ・競技説明(アコーディオン)・応援コール
+   ・おたのしみ(間違い探しの答え)・隠れキャラ(線や表紙のイラストの後ろ)
+   ・日本語の文の折り返し(BudouX で文節の切れ目に <wbr>)
    ・ハンバーガーメニュー
    ・入れ忘れチェック
    中身を変えたい時は js/content.js だけ書き換える。このファイルは触らなくていい
@@ -42,12 +43,31 @@ function setText(node, text) {
   node.classList.toggle('pre-line', String(text).includes('\n'));
 }
 
+// 日本語の文を、文節の切れ目(BudouX。js/vendor/budoux)だけで折り返すようにする
+// 文は textContent と同じく文字のまま入れて(タグは効かない)、切れ目に <wbr> の要素を足す。\n は <br>
+// CSS の .phrases(word-break: keep-all)で、<wbr> と空白以外では折り返さない。長すぎる時だけ途中で折る
+function setPhrases(node, text) {
+  node.replaceChildren();
+  node.classList.add('phrases');
+  String(text).split('\n').forEach((row, n) => {
+    if (n > 0) node.append(document.createElement('br'));
+    const parts = window.budouxJa ? window.budouxJa.parse(row) : [row];
+    parts.forEach((part, k) => {
+      if (k > 0) node.append(document.createElement('wbr'));
+      node.append(part);
+    });
+  });
+  return node;
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) setText(node, text);
   return node;
 }
+
+const phraseEl = (tag, className, text) => setPhrases(el(tag, className), text);
 
 // 画像が設定されていれば枠の中身を <img> にする。src が空なら斜線の仮の枠のまま
 // fallback があれば <picture> にして、src(WebP)が見られないブラウザでは fallback(JPGなど)を出す
@@ -130,7 +150,11 @@ function renderSite() {
   setText($('site-day'), `${MONTH}.${pad(DAY)}`);
   setText($('site-weekday'), WEEKDAYS_EN[WEEKDAY]);
   setText($('site-name'), site.name);
-  setOptionalText($('site-slogan'), site.slogan);
+  // スローガン:横断幕の写真があれば「SLOGAN」+ 写真、なければ緑の線つきの文字
+  const banner = site.sloganImage || {};
+  $('site-banner').hidden = !banner.src;
+  if (banner.src) renderImage($('site-banner-image'), { ...banner, alt: banner.alt || site.slogan || '' });
+  setOptionalText($('site-slogan'), banner.src ? '' : site.slogan);
   setOptionalText($('site-venue'), site.venue && `会場　${site.venue}`);
   renderFittedImage($('frame-cover'), $('cover-image'), site.coverImage);
   // 裏表紙(注意事項の後、フッターの上)。絵だけ。空なら出さない
@@ -181,28 +205,40 @@ function eventBlock(label, ...content) {
   return block;
 }
 
+// ルールなどの箇条書き。番号つきは2列で「1 けんけん」、ふつうは1列で「— 〇〇」
+function ruleList(items, numbered) {
+  const list = el(numbered ? 'ol' : 'ul', `event__rules${numbered ? ' event__rules--numbered' : ''}`);
+  list.setAttribute('role', 'list');
+  list.append(...items.map((item, n) => {
+    const li = el('li');
+    const mark = el('span', 'event__rule-mark', numbered ? String(n + 1) : '—');
+    mark.setAttribute('aria-hidden', 'true');
+    li.append(mark, phraseEl('span', '', item));
+    return li;
+  }));
+  return list;
+}
+
+// Q&A の答え。'文' か { text: '文', list: [ ... ], numbered: true }(リスト → 文の順)
+function qaAnswer(a) {
+  const box = el('div', 'qa__a');
+  if (!a || typeof a !== 'object') return setPhrases(box, a || '');
+  if ((a.list || []).length > 0) box.append(ruleList(a.list, a.numbered));
+  if (a.text) box.append(phraseEl('p', '', a.text));
+  return box;
+}
+
 function eventDetail(ev) {
   const inner = el('div', 'event__inner');
   if (isEmptyEvent(ev)) {
     if (CONTENT.eventsEmptyText) inner.append(el('p', 'event__empty', CONTENT.eventsEmptyText));
     return inner;
   }
-  // ABOUT = ひとこと(太字)の下にルール。番号つきは2列で「1 けんけん」、ふつうは1列で「— 〇〇」
+  // ABOUT = ひとこと(太字)の下にルール
   const about = [];
-  if (ev.summary) about.push(el('p', 'event__summary', ev.summary));
+  if (ev.summary) about.push(phraseEl('p', 'event__summary', ev.summary));
   const rules = ev.rules || [];
-  if (rules.length > 0) {
-    const list = el(ev.rulesNumbered ? 'ol' : 'ul', `event__rules${ev.rulesNumbered ? ' event__rules--numbered' : ''}`);
-    list.setAttribute('role', 'list');
-    list.append(...rules.map((rule, n) => {
-      const li = el('li');
-      const mark = el('span', 'event__rule-mark', ev.rulesNumbered ? String(n + 1) : '—');
-      mark.setAttribute('aria-hidden', 'true');
-      li.append(mark, el('span', '', rule));
-      return li;
-    }));
-    about.push(list);
-  }
+  if (rules.length > 0) about.push(ruleList(rules, ev.rulesNumbered));
   if (about.length > 0) inner.append(eventBlock('ABOUT', ...about));
 
   // 見どころ。1行ずつ、文字の下半分にキャンパスの色の薄いマーカー
@@ -210,7 +246,7 @@ function eventDetail(ev) {
   if (highlight.length > 0) {
     inner.append(eventBlock('HIGHLIGHT', ...highlight.map((line) => {
       const p = el('p', 'event__highlight');
-      p.append(el('span', '', line));
+      p.append(phraseEl('span', '', line));
       return p;
     })));
   }
@@ -220,8 +256,8 @@ function eventDetail(ev) {
   if (qa.length > 0) {
     inner.append(eventBlock('Q&A', ...qa.map((item) => {
       const row = el('div', 'qa');
-      row.append(el('span', 'qa__mark', 'Q'), el('p', 'qa__q', item.q),
-        el('span', 'qa__mark qa__mark--a', 'A'), el('p', 'qa__a', item.a));
+      row.append(el('span', 'qa__mark', 'Q'), phraseEl('p', 'qa__q', item.q),
+        el('span', 'qa__mark qa__mark--a', 'A'), qaAnswer(item.a));
       return row;
     })));
   }
@@ -301,17 +337,18 @@ function openEventFromHash(scroll) {
   if (scroll) item.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
 
-/* ---------- 応援コール＆グッズ ----------
-   コール(「応援団」「みんな」の小さい見出し + 文)・応援歌の案内・グッズの一覧。イラストはグッズの見出しの横
-   コール・応援歌・グッズが全部空なら、セクションごと隠す */
-// コールの文。空白(全角・半角)で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない。\n は改行
+/* ---------- 応援コール ----------
+   コール(「応援団」「みんな」の小さい見出し + 文)→ 最後に応援歌の1行。イラストは1つめのコール名の横
+   グッズの一覧(cheer.goods)は、空でなければコールの下に出る。コール・応援歌・グッズが全部空なら、セクションごと隠す */
+// コールの文。空白(全角・半角)で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない
+// まとまりが1行に入らないほど長い時は、文節の切れ目(BudouX)で折る。\n は改行
 function callText(text) {
-  const dd = el('dd', 'call__text');
+  const dd = el('dd', 'call__text phrases');
   text.split('\n').forEach((row, n) => {
     if (n > 0) dd.append(document.createElement('br'));
     row.split(/([　 ]+)/).forEach((part) => {
       if (!part) return;
-      dd.append(/^[　 ]+$/.test(part) ? part : el('span', 'call__chunk', part));
+      dd.append(/^[　 ]+$/.test(part) ? part : phraseEl('span', 'call__chunk', part));
     });
   });
   return dd;
@@ -319,13 +356,20 @@ function callText(text) {
 
 function renderCheer() {
   const { calls = [], song = {}, goods = [], image } = CONTENT.cheer || {};
-  const hasSong = Boolean(song.title || song.note);
-  $('cheer').hidden = calls.length === 0 && !hasSong && goods.length === 0;
+  $('cheer').hidden = calls.length === 0 && !song.text && goods.length === 0;
 
-  $('cheer-calls').hidden = calls.length === 0;
-  $('cheer-calls-list').replaceChildren(...calls.map((call) => {
+  $('cheer-calls').hidden = calls.length === 0 && !song.text;
+  $('cheer-calls-list').replaceChildren(...calls.map((call, n) => {
     const item = el('div', 'call');
-    if (call.title) item.append(el('h4', 'call__title', call.title));
+    // 1つめのコールは、名前の行の右にイラスト
+    const head = el('div', 'call__head');
+    if (call.title) head.append(el('h3', 'call__title', call.title));
+    if (n === 0 && image && image.src) {
+      const deco = el('div', 'call__image');
+      renderImage(deco, image, { lazy: true });
+      head.append(deco);
+    }
+    if (head.childElementCount > 0) item.append(head);
     const lines = el('dl', 'call__lines');
     (call.lines || []).forEach((line) => {
       lines.append(el('dt', 'call__who', line.who || ''), callText(line.text || ''));
@@ -333,10 +377,7 @@ function renderCheer() {
     item.append(lines);
     return item;
   }));
-
-  $('cheer-song').hidden = !hasSong;
-  setOptionalText($('cheer-song-title'), song.title);
-  setOptionalText($('cheer-song-note'), song.note);
+  setOptionalText($('cheer-song'), song.text);
 
   $('cheer-goods').hidden = goods.length === 0;
   $('cheer-goods-list').replaceChildren(...goods.map((g) => {
@@ -345,9 +386,6 @@ function renderCheer() {
     if (g.desc) item.append(el('span', '', g.desc));
     return item;
   }));
-  const deco = $('cheer-image');
-  deco.hidden = !(image && image.src);
-  renderImage(deco, image, { lazy: true });
 }
 
 /* ---------- ほかの企画 ---------- */
@@ -387,17 +425,21 @@ spotBtn.addEventListener('click', () => {
   setText(spotBtn, open ? '答えをかくす' : '答えを見る');
 });
 
-/* ---------- おたのしみ:隠れキャラ探し ----------
-   イラストの枠(.frame)の中で、枠(.ph)の後ろに隠れて、ふちから顔だけ出す
-   セクションの大きい番号('num-1'…)も枠。数字(.section__digits)の後ろに隠れて、上から顔を出す
-   タップすると前に出てきてセリフを言い、数秒で元に戻る */
-const HIDDEN_KEY = 'hidden-chars-v6'; // v5(見出しの横に置く形)の保存データは使わない
+/* ---------- 隠れキャラ ----------
+   隠れ場所は3種類。どれも、タップすると前に出てきてセリフを言い、数秒で元に戻る
+   ・イラストの枠(.frame。表紙など):枠(.ph)の後ろに隠れて、ふちから顔だけ出す
+   ・黒い線(セクションの下の線・コール名の下の線):線を地面にして、線の下から頭だけ出す
+       線の位置に高さ0の入れ物(.frame--line)を置いて、その下を切る(clip-path)。キャラはその中
+   ・セクションの大きい番号('num-1'…。今は使っていない):数字の後ろに隠れて、上から顔を出す
+   3体全部見つけたら紙吹雪(おたのしみに欄は出さない) */
+const HIDDEN_KEY = 'hidden-chars-v16'; // 線に隠れる形になったので、前の保存データ(v6)は使わない
 const PEEK_SIDES = ['top', 'left', 'right'];
 const PEEK_AT = { start: '18%', center: '50%', end: '82%' };
+const POS_NAMES = Object.keys(PEEK_AT);
 const hiddenFound = new Set(loadList(HIDDEN_KEY));
 let hiddenPlaced = [];   // 実際に隠せたキャラの番号
 let hiddenUnplaced = []; // 隠れる枠が無い・非表示で隠せなかったもの(?check で出す)
-let hiddenShort = false;  // ランダムで、候補の枠がキャラの数より少なかった
+let hiddenShort = false;  // ランダムで、候補の場所がキャラの数より少なかった
 
 function markFound(peek, btn, i) {
   peek.classList.add('is-found');
@@ -411,12 +453,49 @@ function visibleFrame(name) {
   return frame && !frame.closest('[hidden]') ? frame : null;
 }
 
-// ランダムの時に隠れてよい枠。'nums' はセクション番号ぜんぶ(renderNumbers が表示中の番号にだけ id を付ける)
-function randomFrameCandidates() {
-  const names = (CONTENT.hiddenCharFrames || []).flatMap((name) => (name === 'nums'
-    ? [...document.querySelectorAll('[id^="frame-num-"]')].map((f) => f.id.slice('frame-'.length))
-    : [name]));
-  return [...new Set(names)].map(visibleFrame).filter(Boolean);
+// 線の上の、キャラが出てもいい位置(左寄り・真ん中・右寄り)。線のすぐ上にある文字・イラスト(obstacles)と横に重なる位置は外す
+const PEEK_HALF = 28; // キャラの横幅の半分(48px ÷ 2)+ すき間
+function freePositions(host, obstacles) {
+  const box = host.getBoundingClientRect();
+  const blocked = obstacles.filter(Boolean).map((r) => [r.left - PEEK_HALF, r.right + PEEK_HALF]);
+  return POS_NAMES.filter((pos) => {
+    const x = box.left + box.width * parseFloat(PEEK_AT[pos]) / 100;
+    return !blocked.some(([l, r]) => x > l && x < r);
+  });
+}
+
+// 文字の部分だけの大きさ(見出しは横幅いっぱいの箱なので、文字の所だけ測る)
+function textRect(node) {
+  if (!node) return null;
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  return range.getBoundingClientRect();
+}
+
+// ランダムの時の隠れ場所の候補。{ frame(枠) か host(線を持つ要素), positions(出てもいい位置), fixed(必ず使う) }
+//   'lines'     = 表示されているセクションの下の黒い線(最後のセクションは線が無いので外す)
+//   'callLines' = 各コール名の下の線(線の上のコール名・イラストに重ならない位置だけ)
+//   'nums'      = セクションの大きい番号(renderNumbers が表示中の番号にだけ id を付ける)
+//   それ以外    = イラストの枠の名前('cover' など)。必ず1体入る
+function hiddenSpots() {
+  return (CONTENT.hiddenCharFrames || []).flatMap((name) => {
+    if (name === 'lines') {
+      return [...document.querySelectorAll('main > .section:not([hidden]):not(.section--last)')]
+        .map((host) => ({ host, positions: POS_NAMES }));
+    }
+    if (name === 'callLines') {
+      return [...document.querySelectorAll('#cheer:not([hidden]) .call__lines')].map((host) => {
+        const head = host.previousElementSibling;
+        const obstacles = head ? [textRect(head.querySelector('.call__title')), head.querySelector('.call__image')?.getBoundingClientRect()] : [];
+        return { host, positions: freePositions(host, obstacles) };
+      });
+    }
+    if (name === 'nums') {
+      return [...document.querySelectorAll('[id^="frame-num-"]')].map((frame) => ({ frame, positions: ['center'] }));
+    }
+    const frame = visibleFrame(name);
+    return frame ? [{ frame, positions: POS_NAMES, fixed: true }] : [];
+  }).filter((spot) => spot.positions.length > 0);
 }
 
 function shuffle(list) {
@@ -427,86 +506,102 @@ function shuffle(list) {
   return list;
 }
 
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+// 1体分を枠(または線)に入れる
+function placeHiddenChar(c, i, frame, side, pos) {
+  // 番号は小さいので、いつも上の真ん中から。吹き出しは画面の左にはみ出ないよう番号の左にそろえる
+  const isNum = frame.classList.contains('frame--num');
+  const bubblePos = isNum ? 'start' : pos;
+  frame.dataset.hiddenChar = `${i + 1}:${pos}`; // 確認用(どの枠に何体目がいるか)
+
+  // キャラ本体(枠の後ろ・線の下)
+  // 画像の時は、キャラの高さの show(0〜1)だけ見せる(絵によって目の位置が違うので、キャラごとに決められる)
+  const hasImage = Boolean(c.image && c.image.src);
+  const imgClass = hasImage ? ' is-img' : '';
+  const peek = el('span', `peek peek--${side}${imgClass}`, '?');
+  peek.setAttribute('aria-hidden', 'true');
+  renderImage(peek, c.image);
+
+  // タップする所(見えている所のまわりに広げた透明なボタン)
+  const btn = el('button', `peek__hit peek__hit--${side}${imgClass}`);
+  btn.type = 'button';
+  btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);
+
+  const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${bubblePos}${imgClass}`);
+  bubble.setAttribute('aria-live', 'polite');
+  bubble.hidden = true;
+
+  [peek, btn, bubble].forEach((node) => {
+    node.style.setProperty('--at', PEEK_AT[pos]);
+    if (hasImage && c.show > 0 && c.show < 1) node.style.setProperty('--show', c.show);
+  });
+
+  let timer;
+  btn.addEventListener('click', () => {
+    const first = !hiddenFound.has(i);
+    if (first) {
+      hiddenFound.add(i);
+      saveList(HIDDEN_KEY, [...hiddenFound]);
+      markFound(peek, btn, i);
+    }
+    // 今ちょうど全部そろった時は紙吹雪。hiddenCharsDone があれば、そのセリフを言う
+    const done = first && hiddenPlaced.every((n) => hiddenFound.has(n));
+    peek.classList.add('is-out');
+    setOptionalText(bubble, (done && CONTENT.hiddenCharsDone) || c.line);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      peek.classList.remove('is-out');
+      bubble.hidden = true;
+    }, 2800);
+    if (done) confetti();
+  });
+
+  frame.append(peek, btn, bubble);
+  if (hiddenFound.has(i)) markFound(peek, btn, i);
+  hiddenPlaced.push(i);
+}
+
 function renderHiddenChars() {
   hiddenPlaced = [];
   hiddenUnplaced = [];
   hiddenShort = false;
-  // ランダムなら、候補の枠を混ぜて1体に1つずつ配る(1つの枠に2体入らない)。向きは上だけ
-  const random = CONTENT.hiddenCharsRandom;
-  const pool = random ? shuffle(randomFrameCandidates()) : [];
-  const posNames = Object.keys(PEEK_AT);
-  CONTENT.hiddenChars.forEach((c, i) => {
-    const frame = random ? pool[i] : visibleFrame(c.frame);
-    if (!frame) {
+  const chars = CONTENT.hiddenChars;
+
+  if (!CONTENT.hiddenCharsRandom) {
+    chars.forEach((c, i) => {
+      const frame = visibleFrame(c.frame);
+      if (!frame) {
+        hiddenUnplaced.push(i);
+        return;
+      }
+      const isNum = frame.classList.contains('frame--num');
+      const side = isNum ? 'top' : (PEEK_SIDES.includes(c.side) ? c.side : 'top');
+      const pos = isNum ? 'center' : (PEEK_AT[c.pos] ? c.pos : 'center');
+      placeHiddenChar(c, i, frame, side, pos);
+    });
+    return;
+  }
+
+  // ランダム:イラストの枠('cover' など)を先に、残りは線・番号を混ぜて、1か所に1体ずつ配る(向きは上だけ)
+  // どのキャラがどこに入るかも混ぜる
+  const spots = hiddenSpots();
+  const pool = [...spots.filter((s) => s.fixed), ...shuffle(spots.filter((s) => !s.fixed))];
+  shuffle(chars.map((_, i) => i)).forEach((i, k) => {
+    const spot = pool[k];
+    if (!spot) {
       hiddenUnplaced.push(i);
-      hiddenShort = random;
+      hiddenShort = true;
       return;
     }
-    // 番号は小さいので、いつも上の真ん中から。吹き出しは画面の左にはみ出ないよう番号の左にそろえる
-    const isNum = frame.classList.contains('frame--num');
-    const side = random || isNum ? 'top' : (PEEK_SIDES.includes(c.side) ? c.side : 'top');
-    const pos = isNum ? 'center'
-      : random ? posNames[Math.floor(Math.random() * posNames.length)]
-        : (PEEK_AT[c.pos] ? c.pos : 'center');
-    const bubblePos = isNum ? 'start' : pos;
-    frame.dataset.hiddenChar = `${i + 1}:${pos}`; // 確認用(どの枠に何体目がいるか)
-
-    // キャラ本体(枠の後ろ)
-    // 画像の時は、キャラの高さの show(0〜1)だけ枠から見せる(絵によって目の位置が違うので、キャラごとに決められる)
-    const hasImage = Boolean(c.image && c.image.src);
-    const imgClass = hasImage ? ' is-img' : '';
-    const peek = el('span', `peek peek--${side}${imgClass}`, '?');
-    peek.setAttribute('aria-hidden', 'true');
-    renderImage(peek, c.image);
-
-    // タップする所(枠の前。見えている所＋枠の内側まで広げた透明なボタン)
-    const btn = el('button', `peek__hit peek__hit--${side}${imgClass}`);
-    btn.type = 'button';
-    btn.setAttribute('aria-label', `隠れキャラ ${i + 1}`);
-
-    const bubble = el('span', `peek__bubble peek__bubble--${side} peek__bubble--${bubblePos}${imgClass}`);
-    bubble.setAttribute('aria-live', 'polite');
-    bubble.hidden = true;
-
-    [peek, btn, bubble].forEach((node) => {
-      node.style.setProperty('--at', PEEK_AT[pos]);
-      if (hasImage && c.show > 0 && c.show < 1) node.style.setProperty('--show', c.show);
-    });
-
-    let timer;
-    btn.addEventListener('click', () => {
-      peek.classList.add('is-out');
-      setOptionalText(bubble, c.line);
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        peek.classList.remove('is-out');
-        bubble.hidden = true;
-      }, 2800);
-      if (hiddenFound.has(i)) return;
-      hiddenFound.add(i);
-      saveList(HIDDEN_KEY, [...hiddenFound]);
-      markFound(peek, btn, i);
-      updateHunt(true);
-    });
-
-    frame.append(peek, btn, bubble);
-    if (hiddenFound.has(i)) markFound(peek, btn, i);
-    hiddenPlaced.push(i);
+    let frame = spot.frame;
+    if (!frame) {
+      frame = el('span', 'frame frame--line');
+      spot.host.append(frame);
+    }
+    placeHiddenChar(chars[i], i, frame, 'top', pick(spot.positions));
   });
-  setOptionalText($('hunt-text'), CONTENT.hiddenCharsText);
-  updateHunt(false);
-}
-
-// 「●●○ 2 / 3」。celebrate = 今ちょうど全部そろった時は紙吹雪
-function updateHunt(celebrate) {
-  const total = hiddenPlaced.length;
-  const count = hiddenPlaced.filter((i) => hiddenFound.has(i)).length;
-  const done = total > 0 && count === total;
-  $('hunt').hidden = total === 0;
-  $('hunt-dots').replaceChildren(...hiddenPlaced.map((_, n) => el('span', n < count ? 'is-on' : '')));
-  setText($('hunt-count'), `${count} / ${total}`);
-  setOptionalText($('hunt-done'), done ? CONTENT.hiddenCharsDone : '');
-  if (done && celebrate) confetti();
+  hiddenUnplaced.sort((a, b) => a - b);
 }
 
 // 軽い紙吹雪(動きを減らす設定の時は出さない)
@@ -528,11 +623,51 @@ function confetti() {
   setTimeout(() => box.remove(), 3500);
 }
 
-/* ---------- 注意事項 ---------- */
+/* ---------- 注意事項 ----------
+   左に 01・02… の番号、右に文。strong の言葉だけ太字＋薄い緑のマーカー */
+// 文の strong の言葉だけ <strong> にする(文字は textContent と同じく文字のまま)
+// 折り返しは文全体を BudouX で区切った文節の切れ目(<wbr>)。強調の境目では区切らない
+function noticeText(notice) {
+  const { text = '', strong } = typeof notice === 'string' ? { text: notice } : notice;
+  // 強調する所 [始まり, 終わり)。同じ言葉が何回出てきても全部
+  const ranges = [];
+  (Array.isArray(strong) ? strong : [strong]).filter(Boolean).forEach((word) => {
+    for (let at = text.indexOf(word); at >= 0; at = text.indexOf(word, at + word.length)) {
+      ranges.push([at, at + word.length]);
+    }
+  });
+  const breaks = new Set();
+  let offset = 0;
+  (window.budouxJa ? window.budouxJa.parse(text) : [text]).forEach((part, k) => {
+    if (k > 0) breaks.add(offset);
+    offset += part.length;
+  });
+  // 文節の切れ目と強調の始まり・終わりで文を細かく切って、順に並べる
+  const cuts = [...new Set([0, text.length, ...breaks, ...ranges.flat()])].sort((a, b) => a - b);
+  const p = el('p', 'notice__text phrases');
+  let strongEl = null;
+  for (let k = 0; k < cuts.length - 1; k++) {
+    const [from, to] = [cuts[k], cuts[k + 1]];
+    const range = ranges.find(([a, b]) => from >= a && to <= b);
+    if (!range) strongEl = null;
+    else if (from === range[0]) strongEl = p.appendChild(el('strong', 'notice__strong'));
+    const target = strongEl || p;
+    if (breaks.has(from)) target.append(document.createElement('wbr'));
+    target.append(text.slice(from, to));
+  }
+  return p;
+}
+
 function renderNotices() {
   const { notices } = CONTENT;
   $('notice').hidden = notices.length === 0;
-  $('notices-list').replaceChildren(...notices.map((text) => el('p', '', text)));
+  $('notices-list').replaceChildren(...notices.map((notice, n) => {
+    const li = el('li', 'notice');
+    const num = el('span', 'notice__num', pad(n + 1));
+    num.setAttribute('aria-hidden', 'true');
+    li.append(num, noticeText(notice));
+    return li;
+  }));
 }
 
 /* ---------- 目次・メニューと番号 ----------
@@ -545,7 +680,7 @@ function renderNumbers() {
     const section = document.querySelector(link.getAttribute('href'));
     section.classList.remove('section--last');
     link.hidden = section.hidden;
-    // 大きい番号は隠れキャラの枠。表示中のものだけ 'frame-num-3' のような id を付ける
+    // 大きい番号も隠れキャラの枠('nums'。今は使っていない)。表示中のものだけ 'frame-num-3' のような id を付ける
     const frame = section.querySelector('.section__num');
     frame.removeAttribute('id');
     if (section.hidden) return;
@@ -740,20 +875,20 @@ function renderTimetable() {
 
 /* ---------- 入れ忘れチェック(?check の時だけ) ---------- */
 const CHECK_LABELS = {
-  site: '表紙', name: '名前', slogan: 'スローガン', venue: '会場', date: '日付',
+  site: '表紙', name: '名前', slogan: 'スローガン', sloganImage: 'スローガンの横断幕の写真', venue: '会場', date: '日付',
   coverImage: '表紙イラスト', closingImage: '裏表紙イラスト', fallback: '予備の画像(JPG)', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', delayMin: '遅れ(分)', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
   timetableName: 'タイムテーブルでの名前', campus: 'キャンパスの色', campusColors: 'キャンパスの色', category: 'ガチ/ゆる', summary: 'ひとこと', rules: 'ルール', rulesNumbered: 'ルールの番号',
-  highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', eventsEmptyText: '説明が空の競技に出る文',
+  highlight: '見どころ', qa: 'Q&A', q: '質問', a: '答え', numbered: '番号つき', eventsEmptyText: '説明が空の競技に出る文',
   image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotText: '間違い探しの説明', spotAnswerImage: '間違い探しの答え',
   spotPendingText: '答えが準備中の時の文',
   cheer: '応援', calls: 'コール', lines: 'セリフ', who: 'だれが', song: '応援歌', note: '説明', goods: 'グッズ', desc: '説明',
-  notices: '注意事項',
+  notices: '注意事項', strong: '太字の言葉',
   hiddenChars: '隠れキャラ', frame: '隠れる枠', line: 'セリフ',
-  hiddenCharsText: '隠れキャラ探しの説明', hiddenCharsDone: '全部見つけた時のメッセージ',
-  hiddenCharsRandom: '隠れキャラをランダムに', hiddenCharFrames: '隠れてよい枠',
+  hiddenCharsDone: '全部見つけた時のセリフ',
+  hiddenCharsRandom: '隠れキャラをランダムに', hiddenCharFrames: '隠れてよい場所',
 };
 
 // 「競技 2 › ルール」のような読める名前と、「events[1].rule」のようなファイル上の場所
@@ -825,7 +960,7 @@ function renderCheck() {
   if (noColor.length > 0) addList('キャンパスの色が見つからない競技', noColor, (item) => item.value);
   // 隠れる枠が無い(またはセクションが空で非表示の)隠れキャラ。ある時だけ出す
   if (hiddenShort) {
-    addList(`隠れる枠の候補(hiddenCharFrames)が足りず出せなかった隠れキャラ(候補 ${hiddenPlaced.length}個)`,
+    addList(`隠れる場所の候補(hiddenCharFrames)が足りず出せなかった隠れキャラ(候補 ${hiddenPlaced.length}個)`,
       hiddenUnplaced.map((i) => ({ path: ['hiddenChars', i] })));
   } else if (hiddenUnplaced.length > 0) {
     addList('隠れる枠が見つからない隠れキャラ',
@@ -860,13 +995,11 @@ renderNotices();
 renderRunner();
 $('timetable').hidden = CONTENT.timetable.program.length === 0;
 renderSpot();
-// 隠れキャラが番号に隠れられるよう、先に番号を振る(おたのしみは、隠れキャラがいれば出る前提)
-$('fun').hidden = CONTENT.hiddenChars.length === 0 && $('spot').hidden;
+// おたのしみは間違い探しだけ。出ないなら、おたのしみごと隠す
+$('fun').hidden = $('spot').hidden;
+// 番号と「最後のセクション」(下の線が無い)が決まってから、隠れキャラを線に隠す
 renderNumbers();
 renderHiddenChars();
-// 隠れキャラ探しも間違い探しも出ないなら、おたのしみごと隠す(消えたら番号を振り直す)
-$('fun').hidden = $('hunt').hidden && $('spot').hidden;
-renderNumbers();
 renderCheck();
 
 if (CONTENT.timetable.program.length > 0) {
