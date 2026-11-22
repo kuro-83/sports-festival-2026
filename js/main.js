@@ -508,6 +508,44 @@ function shuffle(list) {
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
+const overlaps = (a, b) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
+const overlapArea = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+  * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+
+// 線に隠れたキャラの吹き出しの場所。キャラの横(1行)→ キャラの上 → キャラの横(2行まで)の順に試して、
+// 線のあるセクションの文字・イラストに重ならず、画面からはみ出さない最初の場所にする
+// 全部だめなら、一番ましな所(文字に重なる・はみ出すのは重く、イラストは箱(まわりは透明)にかかる面積で軽く数える)
+function placeLineBubble(frame, bubble, pos) {
+  const line = frame.getBoundingClientRect();
+  const x = line.left + line.width * parseFloat(PEEK_AT[pos]) / 100;
+  const texts = [{ left: x - 24, right: x + 24, top: line.top - 52, bottom: line.top - 4 }]; // 出てきたキャラも文字と同じ扱い
+  const area = frame.closest('section') || document.body;
+  const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    if (!t.data.trim() || t.parentElement.closest('.frame--line, [hidden]')) continue;
+    const range = document.createRange();
+    range.selectNodeContents(t);
+    texts.push(...range.getClientRects());
+  }
+  const images = [...area.querySelectorAll('img')].filter((img) => !img.closest('.frame--line'))
+    .map((img) => img.getBoundingClientRect());
+  const side = pos === 'start' ? ['right', 'left'] : ['left', 'right'];
+  const screenW = document.documentElement.clientWidth;
+  const oneLine = parseFloat(getComputedStyle(bubble).lineHeight) || 20;
+  let best = null;
+  for (const spot of [...side, 'top', ...side.map((s) => `${s}-wrap`)]) {
+    bubble.dataset.spot = spot;
+    const box = bubble.getBoundingClientRect();
+    const bad = (box.left < 0 || box.right > screenW ? 100 : 0)
+      + (box.height > oneLine * 2 + 8 ? 100 : 0) // 3行以上
+      + texts.filter((o) => overlaps(o, box)).length * 10
+      + images.reduce((sum, o) => sum + overlapArea(o, box) / 1000, 0);
+    if (!best || bad < best.bad) best = { spot, bad };
+    if (bad === 0) break;
+  }
+  bubble.dataset.spot = best.spot;
+}
+
 // 1体分を枠(または線)に入れる
 function placeHiddenChar(c, i, frame, side, pos) {
   // 番号は小さいので、いつも上の真ん中から。吹き出しは画面の左にはみ出ないよう番号の左にそろえる
@@ -549,6 +587,7 @@ function placeHiddenChar(c, i, frame, side, pos) {
     const done = first && hiddenPlaced.every((n) => hiddenFound.has(n));
     peek.classList.add('is-out');
     setOptionalText(bubble, (done && CONTENT.hiddenCharsDone) || c.line);
+    if (frame.classList.contains('frame--line')) placeLineBubble(frame, bubble, pos);
     clearTimeout(timer);
     timer = setTimeout(() => {
       peek.classList.remove('is-out');

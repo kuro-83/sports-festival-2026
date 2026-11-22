@@ -248,6 +248,17 @@ p { margin: 0; }
 }
 .call__lines > .frame--line { top: -1px; } /* コール名の下の線(.call__lines の上の線)の上のふち */
 .frame--line .peek__hit--top.is-img { top: calc(-18px - var(--peek-out)); height: calc(var(--peek-out) + 18px); }
+/* 線の時の吹き出しの場所(data-spot)は、タップした時に main.js が、線の上の文字・イラストに重ならない所を選ぶ
+   right / left = 出てきたキャラの右・左に1行(下のふちを線にそろえる)、right-wrap / left-wrap = 同じ所に2行まで、top = キャラの上 */
+.frame--line .peek__bubble[data-spot] { top: auto; bottom: 2px; transform: none; }
+.frame--line .peek__bubble[data-spot^="right"] { left: calc(var(--at) + 30px); right: auto; }
+.frame--line .peek__bubble[data-spot^="left"] { left: auto; right: calc(100% - var(--at) + 30px); }
+.frame--line .peek__bubble[data-spot="right-wrap"] { max-width: min(200px, calc(100% - var(--at) - 30px + var(--gutter))); }
+.frame--line .peek__bubble[data-spot="left-wrap"] { max-width: min(200px, calc(var(--at) - 30px + var(--gutter))); }
+.frame--line .peek__bubble[data-spot="top"] { bottom: calc(var(--peek-h) + 8px); }
+.frame--line .peek__bubble--start[data-spot="top"] { left: calc(var(--at) - 22px); right: auto; }
+.frame--line .peek__bubble--center[data-spot="top"] { left: var(--at); right: auto; transform: translateX(-50%); }
+.frame--line .peek__bubble--end[data-spot="top"] { left: auto; right: calc(100% - var(--at) - 22px); }
 
 /* ---------- 細かいストライプ(表紙の下とフッター) ---------- */
 .track-stripe {
@@ -819,7 +830,7 @@ a.program__inner { color: inherit; text-decoration: none; }
 .calls {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 40px; /* 隠れキャラの吹き出しが、上のコールの文字にかからない間 */
 }
 /* コール名の行。1つめは右にイラスト(下のふちをそろえる) */
 .call__head {
