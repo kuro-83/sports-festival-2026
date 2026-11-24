@@ -60,12 +60,6 @@
         <span class="cover__weekday" id="site-weekday"></span>
       </div>
       <h1 class="cover__title" id="site-name"></h1>
-      <!-- スローガン。横断幕の写真(content.js の site.sloganImage)があれば写真、なければ文字 -->
-      <p class="cover__slogan" id="site-slogan"></p>
-      <div class="cover__banner" id="site-banner" hidden>
-        <p class="cover__banner-label">SLOGAN</p>
-        <div class="cover__banner-image" id="site-banner-image"></div>
-      </div>
       <p class="cover__venue" id="site-venue"></p>
     </div>
     <!-- .frame = イラストの枠。隠れキャラはこの中で、枠(.ph)の後ろに入る -->
@@ -86,7 +80,7 @@
       <a href="#map"><span class="num"></span>施設案内</a>
       <a href="#timetable"><span class="num"></span>タイムテーブル</a>
       <a href="#events"><span class="num"></span>競技説明</a>
-      <a href="#cheer"><span class="num"></span>応援コール</a>
+      <a href="#cheer"><span class="num"></span>応援コール＆スローガン</a>
       <a href="#others"><span class="num"></span>ほかの企画</a>
       <a href="#fun"><span class="num"></span>おたのしみ</a>
       <a href="#notice"><span class="num"></span>注意事項</a>
@@ -145,17 +139,26 @@
     <div class="events" id="events-list"></div>
   </section>
 
-  <!-- 応援コール(中身は content.js の cheer) -->
+  <!-- 応援コール＆スローガン(中身は content.js の cheer と、site.slogan・site.sloganImage) -->
   <section id="cheer" class="section">
     <div class="section__head">
       <span class="section__num frame frame--num"><span class="section__digits"></span></span>
-      <h2>応援コール</h2>
+      <h2>応援コール＆スローガン</h2>
     </div>
     <div class="cheer">
       <!-- コール(1つめのコール名の横にイラスト)→ 最後に応援歌の1行 -->
       <div class="cheer__block" id="cheer-calls">
         <div class="calls" id="cheer-calls-list"></div>
         <p class="cheer__song" id="cheer-song"></p>
+      </div>
+      <!-- スローガン(コール名と同じ見出し + 線 → 一文 → 画像)。site.slogan も site.sloganImage も空なら出ない
+           見出しの下の線は、コール名の下の線と同じく隠れキャラの隠れ場所 -->
+      <div class="call" id="cheer-slogan">
+        <div class="call__head"><h3 class="call__title">スローガン</h3></div>
+        <div class="call__lines slogan">
+          <p class="slogan__text phrases" id="cheer-slogan-text"></p>
+          <div class="slogan__image" id="cheer-slogan-image"></div>
+        </div>
       </div>
       <!-- 応援グッズ(content.js の cheer.goods が空なので、今は出ない) -->
       <div class="cheer__block" id="cheer-goods">

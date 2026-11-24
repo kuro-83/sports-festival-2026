@@ -2,7 +2,7 @@
    体育祭しおり
    ・js/content.js(CONTENT)の中身でページを組み立てる
    ・タイムテーブル + 「いまここ」
-   ・競技説明(アコーディオン)・応援コール
+   ・競技説明(アコーディオン)・応援コール＆スローガン
    ・おたのしみ(間違い探しの答え)・隠れキャラ(線や表紙のイラストの後ろ)
    ・日本語の文の折り返し(BudouX で文節の切れ目に <wbr>)
    ・ハンバーガーメニュー
@@ -150,11 +150,6 @@ function renderSite() {
   setText($('site-day'), `${MONTH}.${pad(DAY)}`);
   setText($('site-weekday'), WEEKDAYS_EN[WEEKDAY]);
   setText($('site-name'), site.name);
-  // スローガン:横断幕の写真があれば「SLOGAN」+ 写真、なければ緑の線つきの文字
-  const banner = site.sloganImage || {};
-  $('site-banner').hidden = !banner.src;
-  if (banner.src) renderImage($('site-banner-image'), { ...banner, alt: banner.alt || site.slogan || '' });
-  setOptionalText($('site-slogan'), banner.src ? '' : site.slogan);
   setOptionalText($('site-venue'), site.venue && `会場　${site.venue}`);
   renderFittedImage($('frame-cover'), $('cover-image'), site.coverImage);
   // 裏表紙(注意事項の後、フッターの上)。絵だけ。空なら出さない
@@ -337,9 +332,10 @@ function openEventFromHash(scroll) {
   if (scroll) item.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
 
-/* ---------- 応援コール ----------
-   コール(「応援団」「みんな」の小さい見出し + 文)→ 最後に応援歌の1行。イラストは1つめのコール名の横
-   グッズの一覧(cheer.goods)は、空でなければコールの下に出る。コール・応援歌・グッズが全部空なら、セクションごと隠す */
+/* ---------- 応援コール＆スローガン ----------
+   コール(「応援団」「みんな」の小さい見出し + 文)→ 応援歌の1行 → スローガン(見出し + 線 → 一文 → 画像)
+   イラストは1つめのコール名の横。グッズの一覧(cheer.goods)は、空でなければ一番下に出る
+   コール・応援歌・スローガン・グッズが全部空なら、セクションごと隠す */
 // コールの文。空白(全角・半角)で区切ったまとまり(「ま・つ・ど」など)の途中では折り返さない
 // まとまりが1行に入らないほど長い時は、文節の切れ目(BudouX)で折る。\n は改行
 function callText(text) {
@@ -355,8 +351,10 @@ function callText(text) {
 }
 
 function renderCheer() {
-  const { calls = [], song = {}, goods = [], image } = CONTENT.cheer || {};
-  $('cheer').hidden = calls.length === 0 && !song.text && goods.length === 0;
+  const { calls = [], song = {}, goods = [], image, sloganText } = CONTENT.cheer || {};
+  const { slogan, sloganImage = {} } = CONTENT.site;
+  const hasSlogan = Boolean(slogan || sloganImage.src);
+  $('cheer').hidden = calls.length === 0 && !song.text && !hasSlogan && goods.length === 0;
 
   $('cheer-calls').hidden = calls.length === 0 && !song.text;
   $('cheer-calls-list').replaceChildren(...calls.map((call, n) => {
@@ -378,6 +376,14 @@ function renderCheer() {
     return item;
   }));
   setOptionalText($('cheer-song'), song.text);
+
+  // スローガン:一文の {slogan} に site.slogan を入れる。site.slogan が空なら一文は出さない
+  $('cheer-slogan').hidden = !hasSlogan;
+  const sloganLine = slogan && sloganText ? sloganText.replace('{slogan}', slogan) : '';
+  $('cheer-slogan-text').hidden = !sloganLine;
+  if (sloganLine) setPhrases($('cheer-slogan-text'), sloganLine);
+  $('cheer-slogan-image').hidden = !sloganImage.src;
+  renderImage($('cheer-slogan-image'), { ...sloganImage, alt: sloganImage.alt || (slogan ? `スローガン『${slogan}』` : 'スローガン') }, { lazy: true });
 
   $('cheer-goods').hidden = goods.length === 0;
   $('cheer-goods-list').replaceChildren(...goods.map((g) => {
@@ -914,7 +920,7 @@ function renderTimetable() {
 
 /* ---------- 入れ忘れチェック(?check の時だけ) ---------- */
 const CHECK_LABELS = {
-  site: '表紙', name: '名前', slogan: 'スローガン', sloganImage: 'スローガンの横断幕の写真', venue: '会場', date: '日付',
+  site: '表紙', name: '名前', slogan: 'スローガン', sloganImage: 'スローガンの画像', venue: '会場', date: '日付',
   coverImage: '表紙イラスト', closingImage: '裏表紙イラスト', fallback: '予備の画像(JPG)', places: '施設案内', mapImage: '簡易マップ', list: '場所',
   text: '説明', timetable: 'タイムテーブル', start: '開始時刻', end: '終了時刻',
   program: 'プログラム', delayMin: '遅れ(分)', label: '名前', runnerFrames: '走るキャラのコマ', events: '競技',
@@ -923,7 +929,7 @@ const CHECK_LABELS = {
   image: '画像', others: 'ほかの企画',
   title: '見出し', fun: 'おたのしみ', spotText: '間違い探しの説明', spotAnswerImage: '間違い探しの答え',
   spotPendingText: '答えが準備中の時の文',
-  cheer: '応援', calls: 'コール', lines: 'セリフ', who: 'だれが', song: '応援歌', note: '説明', goods: 'グッズ', desc: '説明',
+  cheer: '応援', calls: 'コール', lines: 'セリフ', who: 'だれが', song: '応援歌', sloganText: 'スローガンの一文', note: '説明', goods: 'グッズ', desc: '説明',
   notices: '注意事項', strong: '太字の言葉',
   hiddenChars: '隠れキャラ', frame: '隠れる枠', line: 'セリフ',
   hiddenCharsDone: '全部見つけた時のセリフ',

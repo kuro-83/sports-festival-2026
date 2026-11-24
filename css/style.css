@@ -341,7 +341,8 @@ p { margin: 0; }
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 40px;
+  /* 縦の間(スマホで名前の下に表紙イラストが来る時)は、表紙の隠れキャラが顔を出しても・タップで全身出ても名前にかからない広さ */
+  gap: 56px 40px;
   padding-top: 48px;
   padding-bottom: 56px;
 }
@@ -379,32 +380,7 @@ p { margin: 0; }
   font-size: clamp(2rem, 5.5vw, 3.4rem);
   line-height: 1.25;
 }
-.cover__slogan {
-  font-size: 17px;
-  padding-left: 14px;
-  border-left: 4px solid var(--c-accent);
-}
 .cover__venue { font-size: 14px; color: var(--c-muted); }
-/* スローガンの横断幕の写真。小さい「SLOGAN」の見出しの下に、スマホで画面の7割くらい・PCで320px */
-.cover__banner {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.cover__banner-label {
-  font-family: var(--f-num);
-  font-weight: 500;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  line-height: 1;
-  color: var(--c-muted);
-}
-.cover__banner-image { width: min(320px, 70vw); }
-.cover__banner-image img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
 .cover__illust {
   flex: 1 1 300px;
   min-width: 0;
@@ -874,6 +850,20 @@ a.program__inner { color: inherit; text-decoration: none; }
 .call__chunk { display: inline-block; max-width: 100%; }
 /* コールの最後の、応援歌の1行 */
 .cheer__song { font-size: 13px; color: var(--c-muted); }
+/* スローガン:見出しと線はコール名と同じ(.call__head・.call__lines)。線の下に一文 → 画像
+   画像は背景が白なので枠線なし。スマホは幅いっぱい、PCは幅480pxまでで左寄せ */
+/* 応援歌の1行との間は、コールの間(40px)より広く。スローガンの線の右寄りに隠れキャラが入った時、
+   吹き出しが上(応援歌の1行の手前)に出られる広さ */
+#cheer-slogan { margin-top: 24px; }
+.call__lines.slogan {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+}
+.slogan__text { font-size: 15px; line-height: 1.6; }
+.slogan__image { width: 100%; max-width: 480px; }
+.slogan__image img { display: block; width: 100%; height: auto; }
 .goods { border-top: 1px solid var(--c-ink); }
 .good {
   display: flex;
@@ -1040,7 +1030,7 @@ a.program__inner { color: inherit; text-decoration: none; }
 
 /* ---------- スマホ調整 ---------- */
 @media (max-width: 480px) {
-  .cover__body { padding-top: 32px; padding-bottom: 40px; gap: 28px; }
+  .cover__body { padding-top: 32px; padding-bottom: 40px; gap: 56px 28px; }
   .cover__illust { height: 260px; }
   .cover__illust.has-image { flex-basis: 100%; height: auto; }
   .toc { padding: 40px 0; }
