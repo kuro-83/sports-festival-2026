@@ -273,8 +273,10 @@ const CONTENT = {
   fun: {
     // 見出しの下の1行の説明。空にすると消える
     spotText: 'しおりの間違い探し、10個の間違いを探そう！答えはここで見られるよ',
-    // 答えの画像。例: { src: 'img/spot-answer.png', alt: '間違い探しの答え' }
-    spotAnswerImage: { src: '', alt: '' },
+    // 答えの画像(左右2枚の絵。左の絵の青い丸が答え)。「答えを見る」を押すまで読み込まない
+    // スマホは幅いっぱい、PCは幅640pxまで。タップすると新しいタブで大きく開く(ピンチで拡大できる)
+    // 丸が小さいので、元の幅860pxのまま縮めずに使う
+    spotAnswerImage: { src: 'img/spot-answer.webp', fallback: 'img/spot-answer.jpg', width: 860, height: 551, alt: '間違い探しの答え（左の絵の青い丸が10個の間違い）' },
     // 答えの画像が空の時に「答えを見る」を押すと出る1行
     spotPendingText: '答えは準備中！',
   },

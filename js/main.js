@@ -419,13 +419,27 @@ function renderSpot() {
   setOptionalText($('spot-text'), spotText);
 }
 
+// 答えの画像を組み立てる。画像は新しいタブで開くリンクにして、スマホでもピンチで大きく見られるようにする
+// (丸が小さいので)。リンク先は JPG(どのブラウザでも開ける)
+function renderSpotAnswer() {
+  const image = CONTENT.fun.spotAnswerImage;
+  const link = el('a', 'spot__link');
+  link.href = image.fallback || image.src;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  renderImage(link, image);
+  link.setAttribute('aria-label', `${image.alt || '間違い探しの答え'}(新しいタブで大きく開く)`);
+  spotAnswer.className = 'spot__answer';
+  spotAnswer.replaceChildren(link, el('p', 'spot__hint', 'タップで大きく見られるよ'));
+}
+
 // 「答えを見る」で答えの画像を出す。もう一度押すと隠れる
 // ネタバレしないよう、画像は最初に押した時に読み込む
 const spotBtn = $('spot-btn');
 const spotAnswer = $('spot-answer');
 spotBtn.addEventListener('click', () => {
   const open = spotAnswer.hidden;
-  if (open && !spotAnswer.querySelector('img')) renderImage(spotAnswer, CONTENT.fun.spotAnswerImage);
+  if (open && CONTENT.fun.spotAnswerImage.src && !spotAnswer.querySelector('img')) renderSpotAnswer();
   spotAnswer.hidden = !open;
   spotBtn.setAttribute('aria-expanded', String(open));
   setText(spotBtn, open ? '答えをかくす' : '答えを見る');

@@ -924,6 +924,23 @@ a.program__inner { color: inherit; text-decoration: none; }
 .ph--answer:has(img) { height: auto; }
 .spot__pending { font-weight: 700; }
 .ph--answer img { height: auto; }
+/* 答えの画像が入った時:スマホは幅いっぱい、PCは640pxまで。縦横の比率はそのまま
+   画像は新しいタブで開くリンク(タップで大きく見られる) */
+.spot__answer {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.spot__link {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  border: 1px solid var(--c-ink);
+  cursor: zoom-in;
+}
+.spot__link img { display: block; width: 100%; height: auto; }
+.spot__hint { font-size: 13px; color: var(--c-muted); }
 
 /* 全部見つけた時の紙吹雪 */
 .confetti {
