@@ -974,7 +974,9 @@ body.is-locked { position: fixed; left: 0; right: 0; overflow: hidden; } /* 開�
   display: block;
   flex: 0 0 auto;
   width: 100%;
-  max-width: 1200px;
+  /* 横持ち・PCでは、画像の高さが画面に収まる幅まで(1.56 = 画像の横÷縦。60px = 下の説明の行のぶん) */
+  max-width: min(1200px, calc((100vh - 60px) * 1.56));
+  max-width: min(1200px, calc((100dvh - 60px) * 1.56));
   margin: auto;
 }
 .zoom__body img { display: block; width: 100%; height: auto; cursor: zoom-in; }
