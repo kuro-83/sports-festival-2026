@@ -205,6 +205,16 @@
 
 </main>
 
+<!-- 間違い探しの答えの拡大表示(答えの画像をタップすると、ページの中に全画面で開く。中身は main.js が入れる)
+     ×・背景のタップ・Esc で閉じる -->
+<dialog class="zoom" id="spot-zoom" aria-label="間違い探しの答え(拡大)">
+  <button type="button" class="zoom__close" id="spot-zoom-close" aria-label="閉じる">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+  </button>
+  <div class="zoom__body" id="spot-zoom-body"></div>
+  <p class="zoom__hint">ピンチで拡大・画像をタップで2倍</p>
+</dialog>
+
 <!-- 裏表紙(絵だけ。content.js の site.closingImage が空なら出ない) -->
 <div class="closing wrap" id="closing" hidden>
   <div class="closing__image" id="closing-image"></div>

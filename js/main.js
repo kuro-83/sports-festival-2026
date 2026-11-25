@@ -419,19 +419,58 @@ function renderSpot() {
   setOptionalText($('spot-text'), spotText);
 }
 
-// 答えの画像を組み立てる。画像は新しいタブで開くリンクにして、スマホでもピンチで大きく見られるようにする
-// (丸が小さいので)。リンク先は JPG(どのブラウザでも開ける)
+// 答えの画像を組み立てる。画像はボタンにして、タップするとページの中で全画面に大きく出す(丸が小さいので)
 function renderSpotAnswer() {
   const image = CONTENT.fun.spotAnswerImage;
-  const link = el('a', 'spot__link');
-  link.href = image.fallback || image.src;
-  link.target = '_blank';
-  link.rel = 'noopener';
-  renderImage(link, image);
-  link.setAttribute('aria-label', `${image.alt || '間違い探しの答え'}(新しいタブで大きく開く)`);
+  const btn = el('button', 'spot__link');
+  btn.type = 'button';
+  btn.setAttribute('aria-label', '間違い探しの答えを大きく表示');
+  btn.setAttribute('aria-haspopup', 'dialog');
+  renderImage(btn, image);
+  btn.addEventListener('click', openSpotZoom);
   spotAnswer.className = 'spot__answer';
-  spotAnswer.replaceChildren(link, el('p', 'spot__hint', 'タップで大きく見られるよ'));
+  spotAnswer.replaceChildren(btn, el('p', 'spot__hint', 'タップで大きく見られるよ'));
 }
+
+/* 答えの拡大表示(<dialog>)
+   黒っぽい半透明の背景に、画面の幅いっぱいの画像。ピンチで拡大できる(ブラウザの拡大を止めない)
+   画像をタップすると2倍の幅になって、縦横にスクロールして見られる(ピンチが使いにくい時のため。もう一度タップで戻る)
+   ×・背景のタップ・Esc で閉じる。開いている間は後ろのページを止めて、閉じたら元の位置に戻す */
+const spotZoom = $('spot-zoom');
+const spotZoomBody = $('spot-zoom-body');
+let zoomScrollY = 0;
+
+function openSpotZoom() {
+  if (!spotZoomBody.querySelector('img')) {
+    renderImage(spotZoomBody, CONTENT.fun.spotAnswerImage);
+    spotZoomBody.querySelector('img').addEventListener('click', () => {
+      spotZoomBody.classList.toggle('is-2x');
+    });
+  }
+  spotZoomBody.classList.remove('is-2x');
+  // 後ろのページを、今の位置のまま止める(iPhone でも止まるよう、body を固定する)
+  zoomScrollY = window.scrollY;
+  document.body.style.top = `-${zoomScrollY}px`;
+  document.body.classList.add('is-locked');
+  spotZoom.showModal();
+  spotZoomBody.scrollTo(0, 0);
+}
+
+// 閉じて、後ろのページを元の位置に戻す(何回呼んでも同じ)
+function closeSpotZoom() {
+  if (spotZoom.open) spotZoom.close();
+  if (!document.body.classList.contains('is-locked')) return;
+  document.body.classList.remove('is-locked');
+  document.body.style.top = '';
+  window.scrollTo({ top: zoomScrollY, behavior: 'instant' });
+}
+// Esc で閉じた時は close イベントだけが来る(遅れて来ることがあるので、×・背景はその場で戻す)
+spotZoom.addEventListener('close', closeSpotZoom);
+$('spot-zoom-close').addEventListener('click', closeSpotZoom);
+// 背景(画像と×の外)をタップしたら閉じる
+spotZoom.addEventListener('click', (e) => {
+  if (e.target === spotZoom || e.target === spotZoomBody) closeSpotZoom();
+});
 
 // 「答えを見る」で答えの画像を出す。もう一度押すと隠れる
 // ネタバレしないよう、画像は最初に押した時に読み込む
